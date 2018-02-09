@@ -70,16 +70,15 @@ while True:
         Zprev = height
         Tpid = Kp*error+Ki*iErr+Kd*dErr
         # Limit Throttle Values
-        throttle = min(max(Tpid,Tmin),Tmax)
+        throttle = int(min(max(Tpid,Tmin),Tmax))
         # Data Output and Logging - CSV File: 
         # Time, distance measured, filtered height, throttle, Perror, Ierror, Derror, Controller Output,<CR>
         if logOn:
             data = str(time.time())+','+str(distIn)+','+str(height)+','+str(throttle)+','
             data = data + str(error)+','+str(iErr)+','+str(dErr)+','+str(Tpid)+',\n'
             f.write(data)
-        print "distIn: ",distIn
-        print "height: ",height," cm"
-        print "throttle: ",throttle
+        print "distIn: ",distIn," -- height: ",height," cm"
+        print "throttle: ",throttle," -- PID Output: ",Tpid
         print "error: P)",error,",I)",iErr,",D)",dErr
 
         sleep(dt)
