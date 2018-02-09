@@ -1,69 +1,97 @@
-#Version 0.1
+#Version 0.2
 #Authuor: 	Zach Burke
 #Date:		12/04/2017
 #Modified:
 #       Author:         Date:           Note:
 #       Patrick Cote    2/08/2018       Add moving average and error handling
-
+#       Patrick Cote    2/09/2018       Add PID Controller and logging
 import time
 import RPi.GPIO as GPIO
-from time import sleep
 from CanaryComm import CanaryComm
-#import VL53L0X
-#import DigitalIn
 from UltrasonicSensor import UltrasonicSensor
 import serial
 
+# Parameters
+droneOn = 0     # enable drone
+logOn = 1       # enable data logging
+setpoint = 25   # set hover height [cm]
+SMA_LENGTH = 3  # moving average taps
+TMIN = 1400     # Minimum throttle value
+TMAX = 1600     # Maximum throttle value
+ZMIN = 3        # Minimum valid measured height [cm]
+ZMAX = 200      # Maximum valid measured height [cm]
+Kp = 1          # Proportional Gain
+Ki = 0          # Integral Gain
+Kd = 0          # Derivative Gain
+fs = 10         # Sample Rate [samples/sec]
+
+
+# Init
 GPIO.setmode(GPIO.BOARD)
-
 sensor = UltrasonicSensor(32,31)
+
 height = 0
-
-setpoint = 25
-HOVER_THROTTLE = 1675
-THROTTLE_RANGE = 35
-SMA_LENGTH = 3
-Zmin = 3
-Zmax = 200
-
 throttle = 0
-#canary = CanaryComm(0x08)
-sleep(1)
-#canary.arm()
+dt = 1/fs
+Zrange = ZMAX-ZMIN
+Trange = TMAX-TMIN
 distArray = [0]*SMA_LENGTH
 dist = 0
+dErr = 0
+iErr = 0
+Zprev = sensor.getDistanceCM()
+sleep(dt)
 
-fname = 'logs/height'+str(time.time())+'.S'+str(setpoint)+'T'+str(HOVER_THROTTLE)+'R'+str(THROTTLE_RANGE)+'A'+str(SMA_LENGTH)+'.log'
-f = open(fname,'a')
+if droneOn:
+    canary = CanaryComm(0x08)
+    sleep(1)
+    canary.arm()
+
+if logOn:
+    fname = 'logs/height.S'+str(setpoint)+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'+str(SMA_LENGTH)
+    fname = fname+'PID'+str(Kp)+str(Ki)+str(Kd)+'.log'
+    f = open(fname,'a')
+
 while True:
     try:
         try:
             distIn = sensor.getDistanceCM()
         except:
             pass
-	distArray.append(distIn)
-	del distArray[0]
-	dist = sum(distArray)/SMA_LENGTH
-	if(dist >= Zmin and dist <= Zmax):
-		height = dist
-	if(height < setpoint):
-	    throttle = int(HOVER_THROTTLE + THROTTLE_RANGE*((setpoint-height)/(setpoint-Zmin)))
-	elif(height > setpoint):
-	    throttle = int(HOVER_THROTTLE - THROTTLE_RANGE*((height-setpoint)/(Zmax-setpoint)))
-	else:
-	    throttle = HOVER_THROTTLE
-	data = str(distIn)+','+str(height)+','+str(throttle)+','+str(time.time())+',\n'
-	f.write(data)
-	print "distIn: ",distIn
-	print "height: ",height," cm"
-	print "throttle: ",throttle
-	sleep(.1)
-#	canary.setThrottle(throttle)
+        # Moving Average Filter
+        if(distIn >= Zmin and distIn <= Zmax):
+            distArray.append(distIn)
+            del distArray[0]
+            height = sum(distArray)/SMA_LENGTH
+        # PID Control
+        error = (setpoint-height)/Zrange 
+        iErr = min(max(iErr + error*dt,ZMIN),ZMAX)  # limit iErr to eliminate windup
+        dErr = (height-Zprev)/dt
+        Zprev = height
+        Tpid = Kp*error+Ki*iErr+Kd*dErr
+        # Limit Throttle Values
+        throttle = min(max(Tpid,Tmin),Tmax)
+        # Data Output and Logging - CSV File: 
+        # Time, distance measured, filtered height, throttle, Perror, Ierror, Derror, Controller Output,<CR>
+        if logOn:
+            data = str(time.time())+','+str(distIn)+','+str(height)+','+str(throttle)+','
+            data = data + str(error)+','+str(iErr)+','+str(dErr)+','+str(Tpid)+',\n'
+            f.write(data)
+        print "distIn: ",distIn
+        print "height: ",height," cm"
+        print "throttle: ",throttle
+        print "error: P)",error,",I)",iErr,",D)",dErr
+
+        sleep(dt)
+        if droneON:
+    	    canary.setThrottle(throttle)
     except KeyboardInterrupt:
-        print "\nCanary Disarm"
-#        canary.disarm()
+        if droneOn:
+            print "\nCanary Disarm"
+            canary.disarm()
         GPIO.cleanup()
         print "\nKeyboard Exit"
         exit()
 GPIO.cleanup()
-f.close()
+if logOn:
+    f.close()
