@@ -23,6 +23,7 @@ ZMAX = 200      # Maximum valid measured height [cm]
 Kp = 1          # Proportional Gain
 Ki = 0          # Integral Gain
 Kd = 0          # Derivative Gain
+TGain = 50      # System Throttle Gain [PWM/cm]
 fs = 10         # Sample Rate [samples/sec]
 
 
@@ -64,13 +65,13 @@ while True:
             del distArray[0]
             height = sum(distArray)/SMA_LENGTH
         # PID Control
-        error = (setpoint-height)/Zrange 
-        iErr = min(max(iErr + error*dt,ZMIN),ZMAX)  # limit iErr to eliminate windup
+        error = setpoint-height 
+        iErr = iErr + error*dt
         dErr = (height-Zprev)/dt
         Zprev = height
-        Tpid = Kp*error+Ki*iErr+Kd*dErr
+        Tpid = (Kp*error+Ki*iErr+Kd*dErr)*TGain + (TMIN + (TMAX+TMIN)/2)
         # Limit Throttle Values
-        throttle = int(min(max(Tpid,Tmin),Tmax))
+        throttle = int(min(max(Tpid,TMIN),TMAX))
         # Data Output and Logging - CSV File: 
         # Time, distance measured, filtered height, throttle, Perror, Ierror, Derror, Controller Output,<CR>
         if logOn:
@@ -82,7 +83,7 @@ while True:
         print "error: P)",error,",I)",iErr,",D)",dErr
 
         sleep(dt)
-        if droneON:
+        if droneOn:
     	    canary.setThrottle(throttle)
     except KeyboardInterrupt:
         if droneOn:
