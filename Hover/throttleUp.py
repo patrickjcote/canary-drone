@@ -4,6 +4,7 @@
 
 import RPi.GPIO as GPIO
 from time import sleep
+import time
 from CanaryComm import CanaryComm
 from UltrasonicSensor import UltrasonicSensor
 
@@ -12,47 +13,66 @@ GPIO.setmode(GPIO.BOARD)
 sensor = UltrasonicSensor(32,31)
 height = 0
 
-setpoint = 30
+setpoint = 70
 throttle = 1500
+dThrot = 7
 maxThrottle = 1700
-minThrottle = 1500
+minThrottle = 1400
 
 canary = CanaryComm(0x08)
 sleep(1)
 canary.arm()
 sleep(1)
 
-while True:
-	try:
+fname = 'logs/tup.'+str(time.time())+'.SP.'+str(setpoint)+'.log'
+f = open(fname,'a')
+
+try:
+    while True:
 		dist = sensor.getDistanceCM()
 		if(dist > 4 and dist < 400):
 			height = dist
 
 		if(height < setpoint):
 			if(throttle < maxThrottle):
-				throttle+=10
+				throttle+=dThrot
 		else:
 			print "Reached setpoint, disarming"
 			break
+		data = str(time.time())+','+str(height)+','+str(throttle)+',\n'
+                try:
+		    f.write(data)
+                except:
+                    pass
 		print "Height: ",height," cm"
 		print "throttle: ",throttle
-		canary.setThrottle(throttle)
-	except KeyboardInterrupt:
-		canary.disarm()
-		GPIO.cleanup()
-		exit()
-sleep(1)
-while True:
-	dist = sensor.getDistanceCM()
+                try:
+                    canary.setThrottle(throttle)
+                except:
+                    pass
+    sleep(1)
+    while True:
+        dist = sensor.getDistanceCM()
 	if(dist >4 and dist < 400):
-		height = dist
-	if(height < 5):
-		break
+	    height = dist
+	if(height < 8):
+	    break
 	else:
-		if(throttle > minThrottle):
-			throttle -= 10
-		print "Height: ",height," cm"
-		print "throttle: ",throttle
-		canary.setThrottle(throttle)
-canary.disarm()
-GPIO.cleanup()
+	    if(throttle > minThrottle):
+	        throttle -= dThrot
+	    print "Height: ",height," cm"
+            print "throttle: ",throttle
+	    data = str(time.time())+','+str(height)+','+str(throttle)+',\n'
+	    data = data+'\n'
+	    f.write(data)
+            try:
+                canary.setThrottle(throttle)
+            except:
+                pass
+    f.close()	
+    canary.disarm()
+    GPIO.cleanup()
+except KeyboardInterrupt:
+    canary.disarm()
+    GPIO.cleanup()
+    exit()
