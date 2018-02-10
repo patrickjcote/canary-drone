@@ -6,24 +6,25 @@
 #       Patrick Cote    2/08/2018       Add moving average and error handling
 #       Patrick Cote    2/09/2018       Add PID Controller and logging
 import time
+from time import sleep
 import RPi.GPIO as GPIO
 from CanaryComm import CanaryComm
 from UltrasonicSensor import UltrasonicSensor
 import serial
 
 # Parameters
-droneOn = 0     # enable drone
+droneOn = 1     # enable drone
 logOn = 1       # enable data logging
+logVerbose = 0  # enable PID logging
 setpoint = 25   # set hover height [cm]
 SMA_LENGTH = 3  # moving average taps
 TMIN = 1400     # Minimum throttle value
 TMAX = 1600     # Maximum throttle value
 ZMIN = 3        # Minimum valid measured height [cm]
 ZMAX = 200      # Maximum valid measured height [cm]
-Kp = 1          # Proportional Gain
+Kp = 4          # Proportional Gain
 Ki = 0          # Integral Gain
 Kd = 0          # Derivative Gain
-TGain = 50      # System Throttle Gain [PWM/cm]
 fs = 10         # Sample Rate [samples/sec]
 
 
@@ -33,7 +34,8 @@ sensor = UltrasonicSensor(32,31)
 
 height = 0
 throttle = 0
-dt = 1/fs
+dt = 0.1 
+print dt
 Zrange = ZMAX-ZMIN
 Trange = TMAX-TMIN
 distArray = [0]*SMA_LENGTH
@@ -60,27 +62,33 @@ while True:
         except:
             pass
         # Moving Average Filter
-        if(distIn >= Zmin and distIn <= Zmax):
+        if(distIn >= ZMIN and distIn <= ZMAX):
             distArray.append(distIn)
             del distArray[0]
             height = sum(distArray)/SMA_LENGTH
         # PID Control
-        error = setpoint-height 
+        error = (setpoint-height)
         iErr = iErr + error*dt
         dErr = (height-Zprev)/dt
         Zprev = height
-        Tpid = (Kp*error+Ki*iErr+Kd*dErr)*TGain + (TMIN + (TMAX+TMIN)/2)
+        Tpid = (Kp*error+Ki*iErr-Kd*dErr) + throttle
         # Limit Throttle Values
         throttle = int(min(max(Tpid,TMIN),TMAX))
         # Data Output and Logging - CSV File: 
         # Time, distance measured, filtered height, throttle, Perror, Ierror, Derror, Controller Output,<CR>
         if logOn:
             data = str(time.time())+','+str(distIn)+','+str(height)+','+str(throttle)+','
-            data = data + str(error)+','+str(iErr)+','+str(dErr)+','+str(Tpid)+',\n'
+            if logVerbose:
+                data = data + str(error)+','+str(iErr)+','+str(dErr)+','+str(Tpid)+','
+            data = data+'\n'
             f.write(data)
-        print "distIn: ",distIn," -- height: ",height," cm"
-        print "throttle: ",throttle," -- PID Output: ",Tpid
-        print "error: P)",error,",I)",iErr,",D)",dErr
+        if logVerbose:
+            print "distIn: ",distIn," -- height: ",height," cm"
+            print "throttle: ",throttle," -- PID Output: ",Tpid
+            print "error: P)",error,",I)",iErr,",D)",dErr
+        else:
+            print "distIn: ",distIn," -- height: ",height," cm"
+            print "throttle: ",throttle
 
         sleep(dt)
         if droneOn:
