@@ -14,15 +14,16 @@ import serial
 
 # Parameters
 droneOn = 1     # enable drone
-logOn = 1       # enable data logging
+logOn = 0       # enable data logging
 logVerbose = 0  # enable PID logging
 setpoint = 25   # set hover height [cm]
 SMA_LENGTH = 3  # moving average taps
-TMIN = 1400     # Minimum throttle value
-TMAX = 1600     # Maximum throttle value
+TMIN = 1500     # Minimum throttle value
+TMAX = 1650     # Maximum throttle value
 ZMIN = 3        # Minimum valid measured height [cm]
 ZMAX = 200      # Maximum valid measured height [cm]
-Kp = 4          # Proportional Gain
+Kt = 50        # Throttle gain [PWM/m]
+Kp = 2          # Proportional Gain
 Ki = 0          # Integral Gain
 Kd = 0          # Derivative Gain
 fs = 10         # Sample Rate [samples/sec]
@@ -35,7 +36,6 @@ sensor = UltrasonicSensor(32,31)
 height = 0
 throttle = 0
 dt = 0.1 
-print dt
 Zrange = ZMAX-ZMIN
 Trange = TMAX-TMIN
 distArray = [0]*SMA_LENGTH
@@ -49,6 +49,15 @@ if droneOn:
     canary = CanaryComm(0x08)
     sleep(1)
     canary.arm()
+    sleep(1)
+    try:
+        canary.setThrottle(1500)
+    except KeyboardInterrupt:
+        canary.disarm()
+        exit()
+
+
+
 
 if logOn:
     fname = 'logs/height.S'+str(setpoint)+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'+str(SMA_LENGTH)
@@ -71,7 +80,7 @@ while True:
         iErr = iErr + error*dt
         dErr = (height-Zprev)/dt
         Zprev = height
-        Tpid = (Kp*error+Ki*iErr-Kd*dErr) + throttle
+        Tpid = (Kp*error+Ki*iErr-Kd*dErr) * Kt
         # Limit Throttle Values
         throttle = int(min(max(Tpid,TMIN),TMAX))
         # Data Output and Logging - CSV File: 
