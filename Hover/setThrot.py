@@ -1,6 +1,6 @@
 #Version 0.1
-#Date 02/09/2018
-#Author: Zach Burke
+#Date 02/10/2018
+#Author: Patrick Cote
 
 import RPi.GPIO as GPIO
 from time import sleep
@@ -22,9 +22,10 @@ dt = .001
 
 def setThrottle():
     while True:
-        global throttle
-        global canary
-        global f
+        global throttle, canary, f, dist, sensor, height
+        dist = sensor.getDistanceCM()
+        if(dist > 4 and dist < 400):
+            height = dist
         if throttle:
             throttle = max(min(throttle,maxThrottle),1000)
         else:
@@ -56,12 +57,12 @@ f = open(fname,'a')
 
 t = Thread(target=setThrottle)
 t.start()
+dist = sensor.getDistanceCM()
+if(dist > 4 and dist < 400):
+	height = dist
 
 try:
     while True:
-		dist = sensor.getDistanceCM()
-		if(dist > 4 and dist < 400):
-			height = dist
 		print "Height: ",height," cm"
 		print "throttle: ",throttle
                 tin = input("Set Throttle: ")
