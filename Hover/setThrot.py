@@ -3,6 +3,7 @@
 #Author: Patrick Cote
 
 import RPi.GPIO as GPIO
+import math
 from time import sleep
 import time
 from CanaryComm import CanaryComm
@@ -18,6 +19,7 @@ armDrone = 0
 maxThrottle = 1700
 minThrottle = 1400
 throttle = 1000
+trange = maxThrottle-minThrottle
 dt = .001
 
 def setThrottle():
@@ -90,7 +92,7 @@ try:
                         throttle = i
                         print throttle
                         sleep(dt)
-                elif tin == 4: # up then down
+                elif tin == 4: # up then down half speed
                     for i in range(minThrottle,maxThrottle):
                         throttle = i
                         print throttle
@@ -99,7 +101,11 @@ try:
                         throttle = i
                         print throttle
                         sleep(dt*2)
-
+                elif tin == 5: # chirp to 10Hz
+                    for i in range(0,10,dt):
+                        throttle = sin(i*i*3.14159)*trange + minThrottle + (trange*2)
+                        print throttle
+                        sleep(dt)
                 else:
                     throttle = tin
     f.close()
