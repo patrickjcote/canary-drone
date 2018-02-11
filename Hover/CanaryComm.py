@@ -27,15 +27,11 @@ class CanaryComm:
 
     # Set States
     def arm(self):
-        self.channel = [1000,1500,1500,1500,2000]
+        self.channel = [1000,1500,1500,1500,1750]
         self.updateState()
 
     def disarm(self):
         self.channel = [1000,1500,1500,1500,1000]
-        self.updateState()
-
-    def hover(self):
-        self.channel = [1650,1500,1500,1500,2000]
         self.updateState()
 
     # Return State
@@ -45,7 +41,6 @@ class CanaryComm:
     # Send State
     def updateState(self):
         command = []
-    
         for ch in self.channel:
             # Limit Possible Channel Values to 1000-1750
             ch = min(max(ch,1000),1750)
