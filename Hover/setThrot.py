@@ -1,33 +1,30 @@
-#Version 0.1
+#Version 0.2
 #Date 02/10/2018
 #Author: Patrick Cote
 
+# Libraries
 import RPi.GPIO as GPIO
 import math
-from time import sleep
-import time
+from time import sleep, time
 from CanaryComm import CanaryComm
 from UltrasonicSensor import UltrasonicSensor
 from threading import Thread
 
-GPIO.setmode(GPIO.BOARD)
-
-height = 0
-
+# Arm the Drone
 armDrone = 1
+
+# Parameters
 maxThrottle = 1700
 minThrottle = 1400
+height = 0
 throttle = 1000
 trange = maxThrottle-minThrottle
 dt = .001
 
+# Function for set throttle thread
 def setThrottle():
     while True:
-        global throttle
-        global canary
-        global height
-        global dist
-        global f
+        global throttle, canary, height, dist, f
         sensor = UltrasonicSensor(32,31)
         dist = sensor.getDistanceCM()
         if(dist > 4 and dist < 400):
@@ -43,27 +40,29 @@ def setThrottle():
                 canary.setThrottle(throttle)
         except:
             pass
-	data = str(time.time())+','+str(height)+','+str(throttle)+',\n'
+	data = str(time())+','+str(height)+','+str(throttle)+',\n'
         try:
 	    f.write(data)
         except:
             pass
-        sleep(.1)
+        sleep(.06)
 
+# Init
 if armDrone:
     canary = CanaryComm(0x08)
 sleep(1)
 if armDrone:
     canary.arm()
 sleep(1)
-
 fname = 'logs/manualT.'+str(time.time())+'.log'
 f = open(fname,'a')
-
+GPIO.setmode(GPIO.BOARD)
 t = Thread(target=setThrottle)
 t.start()
 sleep(.11)
 
+# Forever loop
+#   If <ctrl - c>, disarm and quit
 try:
     while True:
 		print "Height: ",height," cm"
