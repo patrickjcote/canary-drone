@@ -19,24 +19,28 @@ minThrottle = 1400
 height = 0
 throttle = 1000
 trange = maxThrottle-minThrottle
-dt = .001  # Delay for throttle ramps
+dt = .01  # Delay for throttle ramps
 
 # Function for set throttle thread
 def setThrottle():
     while True:
         global throttle, canary, height, dist, f
-        sensor = UltrasonicSensor(32,31)
-        dist = sensor.getDistanceCM()
-        if(dist > 4 and dist < 400):
-            height = dist
         if throttle>0:
-            throttle = max(min(throttle,maxThrottle),1000)
+            if throttle == 1000:
+                pass
+            else:
+                throttle = max(min(throttle,maxThrottle),1000)
         elif throttle<0:
+            GPIO.cleanup()
             if armDrone:
                 canary.disarm()
                 break
         else:
             pass
+        sensor = UltrasonicSensor(32,31)
+        dist = sensor.getDistanceCM()
+        if(dist > 4 and dist < 400):
+            height = dist
         try:
             if armDrone:
                 canary.setThrottle(throttle)
@@ -56,7 +60,7 @@ sleep(1)
 if armDrone:
     canary.arm()
 sleep(1)
-fname = 'logs/manualT.'+str(time.time())+'.log'
+fname = 'logs/setThrot.'+str(time())+'.csv'
 f = open(fname,'a')
 GPIO.setmode(GPIO.BOARD)
 t = Thread(target=setThrottle)
@@ -68,15 +72,15 @@ sleep(.11)
 try:
     while True:
         # User Input Menu
-        print "----- Current Status -----"
+        print "\n----- Current Status -----"
         print "   Height   : ",height," cm"
         print "   Throttle : ",throttle
-        print "----- Input Options ------"
-        print "Sinusoid: 1-9 -- Sine wave of frequency 1-9Hz"
-        print "Ramp: 10-Up, 20-Down, 30-Up/Down, 40-Up/Down (1/2 speed) , 50-Chirp (0-8Hz)"
-        print "Set Throttle: ",minThrottle," to ", maxThrottle
-        print "Disarm: 0"
-        print "Exit: -1 or <ctrl>+c"
+        print "\n----- Input Options ------"
+        print "   Sinusoid: 1-9 -- Sine wave of frequency 1-9Hz"
+        print "   Ramp: 10-Up, 20-Down, 30-Up/Down, 40-Up/Down (1/2 speed) , 50-Chirp (0-8Hz)"
+        print "   Set Throttle: ",minThrottle," to ", maxThrottle
+        print "   Disarm: 0"
+        print "   Exit: -1 or <ctrl>+c"
 
         tin = input("\nInput: ")
         
@@ -89,11 +93,13 @@ try:
                 throttle = i
                 print "Throttle Ramping: ",throttle
                 sleep(dt)
+            throttle = 1000
         elif tin == 20: # ramp down
             for i in range(maxThrottle,minThrottle,-1):
                 throttle = i
                 print "Throttle Ramping: ",throttle
                 sleep(dt)
+            throttle = 1000
         elif tin == 30: # up then down
             for i in range(minThrottle,maxThrottle):
                 throttle = i
@@ -103,6 +109,7 @@ try:
                 throttle = i
                 print "Throttle Ramping: ",throttle
                 sleep(dt)
+            throttle = 1000
         elif tin == 40: # up then down half speed
             for i in range(minThrottle,maxThrottle):
                 throttle = i
@@ -112,16 +119,19 @@ try:
                 throttle = i
                 print "Throttle Ramping: ",throttle
                 sleep(dt*2)
+            throttle = 1000
         elif tin == 50: # chirp to 8Hz
             for i in range(0,int(8/dt)):
-                throttle = math.sin(i*i*3.14159*dt)*trange + minThrottle + (trange/2)
+                throttle = int(math.sin(i*i*3.14159*dt)*trange) + minThrottle + int(trange/2)
                 print "Throttle Ramping: ",throttle
                 sleep(dt)
+            throttle = 1000
         elif 0 < tin and tin < 10: # Sinusoid
             for i in range(0,int(5/dt)):
-                throttle = math.sin(tin*2*3.14159*dt)*trange + minThrottle + (trange/2)
+                throttle = int(math.sin(tin*2*3.14159*i*dt)*trange) + minThrottle + int(trange/2)
                 print "Throttle Ramping: ",throttle
                 sleep(dt)
+            throttle = 1000
         elif tin < 0:
             f.close()
             if armDrone:
