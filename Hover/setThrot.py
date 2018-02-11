@@ -12,10 +12,9 @@ from threading import Thread
 
 GPIO.setmode(GPIO.BOARD)
 
-sensor = UltrasonicSensor(32,31)
 height = 0
 
-armDrone = 0
+armDrone = 1
 maxThrottle = 1700
 minThrottle = 1400
 throttle = 1000
@@ -24,7 +23,12 @@ dt = .001
 
 def setThrottle():
     while True:
-        global throttle, canary, f, dist, sensor, height
+        global throttle
+        global canary
+        global height
+        global dist
+        global f
+        sensor = UltrasonicSensor(32,31)
         dist = sensor.getDistanceCM()
         if(dist > 4 and dist < 400):
             height = dist
@@ -46,7 +50,6 @@ def setThrottle():
             pass
         sleep(.1)
 
-
 if armDrone:
     canary = CanaryComm(0x08)
 sleep(1)
@@ -59,9 +62,7 @@ f = open(fname,'a')
 
 t = Thread(target=setThrottle)
 t.start()
-dist = sensor.getDistanceCM()
-if(dist > 4 and dist < 400):
-	height = dist
+sleep(.11)
 
 try:
     while True:
@@ -102,8 +103,8 @@ try:
                         print throttle
                         sleep(dt*2)
                 elif tin == 5: # chirp to 10Hz
-                    for i in range(0,10,dt):
-                        throttle = sin(i*i*3.14159)*trange + minThrottle + (trange*2)
+                    for i in range(0,int(10/dt)):
+                        throttle = math.sin(i*i*3.14159*dt)*trange + minThrottle + (trange/2)
                         print throttle
                         sleep(dt)
                 else:
