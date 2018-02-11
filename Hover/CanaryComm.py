@@ -42,8 +42,8 @@ class CanaryComm:
     def updateState(self):
         command = []
         for ch in self.channel:
-            # Limit Possible Channel Values to 1000-1750
-            ch = min(max(ch,1000),1750)
+            # Limit Possible Channel Values to 1000-1850
+            ch = min(max(ch,1000),1850)
             # Split Channel Value into 2 Bytes
             command.append(ch & 0xFF)
             command.append((ch & 0xFF00)>>8)
