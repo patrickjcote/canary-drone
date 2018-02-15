@@ -20,8 +20,8 @@ maxTrim = 1550
 minTrim = 1450
 height = 0
 throttle = 1000
-pitch = 1495
-roll = 1500
+pitch = 1489
+roll = 1518
 trange = maxThrottle-minThrottle
 dt = .01  # Delay for throttle ramps
 

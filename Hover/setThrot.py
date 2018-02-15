@@ -14,12 +14,12 @@ from threading import Thread
 armDrone = 1
 
 # Parameters
-maxThrottle = 1700
+maxThrottle = 1600
 minThrottle = 1400
 height = 0
 throttle = 1000
 trange = maxThrottle-minThrottle
-dt = .01  # Delay for throttle ramps
+dt = .05  # Delay for throttle ramps
 
 # Function for set throttle thread
 def setThrottle():
@@ -79,8 +79,8 @@ try:
         print "   Height   : ",height," cm"
         print "   Throttle : ",throttle
         print "\n----- Input Options ------"
-        print "   Sinusoid: f=0-9 -- 5 Second Sine wave of frequency f<9Hz"
-        print "   Ramp: 10-Up, 20-Down, 30-Up/Down, 40-Up/Down (1/2 speed) , 50-Chirp (0-8Hz)"
+        print "   Sinusoid: 0-9 -- 5 Second Sine wave of frequency = input/2"
+        print "   Ramp: 10-Up, 20-Down, 30-Up/Down, 40-Up/Down (1/2 speed)"
         print "   Set Throttle: ",minThrottle," to ", maxThrottle
         print "   Disarm: 0"
         print "   Exit: -1 or <ctrl>+c"
@@ -130,15 +130,9 @@ try:
                 print "Throttle Ramping: ",throttle
                 sleep(dt*2)
             throttle = 1000
-        elif tin == 50: # chirp to 8Hz
-            for i in range(0,int(8/dt)):
-                throttle = int(math.sin(i*i*3.14159*dt)*trange/2) + minThrottle + int(trange/2)
-                print "Throttle Ramping: ",throttle
-                sleep(dt)
-            throttle = 1000
         elif 0 < tin and tin < 10: # Sinusoid
             for i in range(0,int(5/dt)):
-                throttle = int(math.sin(tin*2*3.14159*i*dt)*trange/2) + minThrottle + int(trange/2)
+                throttle = int(math.sin(tin*3.14159*i*dt)*trange/2) + minThrottle + int(trange/2)
                 print "Throttle Ramping: ",throttle
                 sleep(dt)
             throttle = 1000
