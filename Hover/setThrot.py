@@ -5,13 +5,13 @@
 # Libraries
 import RPi.GPIO as GPIO
 import math
-from time import sleep, time
+from time import sleep, strftime, time
 from CanaryComm import CanaryComm
 from UltrasonicSensor import UltrasonicSensor
 from threading import Thread
 
 # Arm the Drone
-armDrone = 1
+armDrone = 0
 
 # Parameters
 maxThrottle = 1700
@@ -63,7 +63,7 @@ sleep(1)
 if armDrone:
     canary.arm()
 sleep(1)
-fname = 'logs/setThrot.'+str(time())+'.csv'
+fname = 'logs/setThrot.'+strftime("%Y.%m.%d.%H%M%S")+'.csv'
 f = open(fname,'a')
 GPIO.setmode(GPIO.BOARD)
 t = Thread(target=setThrottle)
