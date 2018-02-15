@@ -15,7 +15,7 @@ armDrone = 1
 
 # Parameters
 maxThrottle = 1600
-minThrottle = 1400
+minThrottle = 1500
 height = 0
 throttle = 1000
 trange = maxThrottle-minThrottle
@@ -115,6 +115,7 @@ try:
                 throttle = i
                 print "Throttle Ramping: ",throttle
                 sleep(dt)
+            sleep(1)
             for i in range(maxThrottle,minThrottle,-1):
                 throttle = i
                 print "Throttle Ramping: ",throttle
