@@ -11,7 +11,7 @@ from UltrasonicSensor import UltrasonicSensor
 from threading import Thread
 
 # Arm the Drone
-armDrone = 1
+armDrone = 0
 
 # Parameters
 maxThrottle = 1700
@@ -92,14 +92,10 @@ try:
     while True:
         # User Input Menu
         print "\n----- Current Status -----"
-        print "   Height   : ",height," cm"
-        print "   Throttle : ",throttle
-        print "   Trim:  Roll - ",roll," | Pitch - ",pitch
+        print "   Throttle : ",throttle," | Roll: ",roll," | Pitch: ",pitch
         print "\n----- Input Options ------"
-        print "   Trim Pitch Up/Down: 1/2    Trim Roll Left/Right: 3/4"
-        print "   Set Throttle: ",minThrottle," to ", maxThrottle
-        print "   Disarm: 0"
-        print "   Exit: -1 or <ctrl>+c"
+        print "   Pitch Up/Down: 1/2 | Roll Left/Right: 3/4 | Throttle Up/Down: 5/6 "
+        print "   Disarm: 0 | Exit: -1 or <ctrl>+c"
 
         try:
             tin = input("\nInput: ")
@@ -126,6 +122,12 @@ try:
         elif tin == 4:
             print "Roll Left"
             roll = roll - 1
+        elif tin == 5:
+            print "Increment Throttle"
+            throttle = throttle + 1
+        elif tin == 6:
+            print "Decrement Throttle"
+            throttle = throttle - 1
         elif tin < 0:
             f.close()
             if armDrone:
