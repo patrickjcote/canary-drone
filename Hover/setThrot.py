@@ -11,7 +11,7 @@ from UltrasonicSensor import UltrasonicSensor
 from threading import Thread
 
 # Arm the Drone
-armDrone = 0
+armDrone = 1
 
 # Parameters
 maxThrottle = 1700

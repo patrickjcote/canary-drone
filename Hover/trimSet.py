@@ -11,7 +11,7 @@ from UltrasonicSensor import UltrasonicSensor
 from threading import Thread
 
 # Arm the Drone
-armDrone = 0
+armDrone = 1
 
 # Parameters
 maxThrottle = 1700
@@ -20,7 +20,7 @@ maxTrim = 1550
 minTrim = 1450
 height = 0
 throttle = 1000
-pitch = 1500
+pitch = 1495
 roll = 1500
 trange = maxThrottle-minThrottle
 dt = .01  # Delay for throttle ramps
@@ -79,7 +79,7 @@ sleep(1)
 if armDrone:
     canary.arm()
 sleep(1)
-fname = 'logs/trimSet.'+strftime("%Y.%m.%d.%H%M%S")+'.csv'
+fname = 'logs/trimSet.'+strftime("%Y.%m.%d.%H%M%S")+'.tHTRP.csv'
 f = open(fname,'a')
 GPIO.setmode(GPIO.BOARD)
 t = Thread(target=setThrottle)
