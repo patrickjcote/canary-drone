@@ -14,8 +14,8 @@ import serial
 
 # Parameters
 droneOn = 1     # enable drone
-logOn = 0       # enable data logging
-logVerbose = 0  # enable PID logging
+logOn = 1       # enable data logging
+logVerbose = 1  # enable PID logging
 setpoint = 25   # set hover height [cm]
 SMA_LENGTH = 3  # moving average taps
 TMIN = 1500     # Minimum throttle value
@@ -23,9 +23,9 @@ TMAX = 1550     # Maximum throttle value
 ZMIN = 3        # Minimum valid measured height [cm]
 ZMAX = 200      # Maximum valid measured height [cm]
 Kt = 50        # Throttle gain [PWM/m]
-Kp = 2          # Proportional Gain
-Ki = 0          # Integral Gain
-Kd = 0          # Derivative Gain
+Kp = 2         # Proportional Gain
+Ki = 1          # Integral Gain
+Kd = 2          # Derivative Gain
 fs = 10         # Sample Rate [samples/sec]
 
 
@@ -60,8 +60,8 @@ if droneOn:
 
 
 if logOn:
-    fname = 'logs/height.S'+str(setpoint)+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'+str(SMA_LENGTH)
-    fname = fname+'PID'+str(Kp)+str(Ki)+str(Kd)+'.log'
+    fname = 'logs/hovertest.'+time.strftime("%Y.%m.%d.%H%M%S")+'.S'+str(setpoint)+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'+str(SMA_LENGTH)
+    fname = fname+'PID'+str(Kp)+'-'+str(Ki)+'-'+str(Kd)+'.log'
     f = open(fname,'a')
 
 while True:
