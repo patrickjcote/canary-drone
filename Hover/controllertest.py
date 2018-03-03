@@ -19,12 +19,17 @@ if droneOn:
     droneOn = input("Are you sure [0 - No, 1 - yes]: ")     # enable drone
 logOn = 1       # enable data logging
 logVerbose = 1  # enable PID logging
-setpoint = input("Setpoint [cm]: ")   # set hover height [cm]
+#setpoint = input("Setpoint [cm]: ")   # set hover height [cm]
 SMA_LENGTH = 3  # moving average taps
-THOVER = input("Hover Throttle: ")	#
-TRANGE = input("Throttle Span: ")		# Range of 
+#THOVER = input("Hover Throttle: ")	#
+#TRANGE = input("Throttle Span: ")		# Range of 
 Kt = input("Error Gain [pwm/cm]: ")        # Throttle gain [PWM/cm]
-testDur = input("Test Duraction [s]: ")
+#testDur = input("Test Duraction [s]: ")
+
+setpoint = 40 
+THOVER = 1600
+TRANGE = 50		# Range of 
+testDur = 30
 
 # Init
 GPIO.setmode(GPIO.BOARD)
