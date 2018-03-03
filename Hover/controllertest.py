@@ -24,6 +24,7 @@ SMA_LENGTH = 3  # moving average taps
 THOVER = input("Hover Throttle: ")	#
 TRANGE = input("Throttle Span: ")		# Range of 
 Kt = input("Error Gain [pwm/cm]: ")        # Throttle gain [PWM/cm]
+testDur = input("Test Duraction [s]: ")
 
 # Init
 GPIO.setmode(GPIO.BOARD)
@@ -65,7 +66,7 @@ if logOn:
     fname = fname+time.strftime("%Y.%m.%d.%H%M%S")+'.S'+str(setpoint)+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'+str(SMA_LENGTH)
     fname = fname+'K'+str(Kt)+'.csv'
     f = open(fname,'a')
-
+tstart = time.time()
 while True:
     try:
         try:
@@ -101,6 +102,13 @@ while True:
         sleep(dt)
         if droneOn:
             canary.setThrottle(throttle)
+        if time.time()>(tstart+testDur):
+            if droneOn:
+                print "\nCanary Disarm"
+                canary.disarm()
+            GPIO.cleanup()
+            print "\nTest Completed"
+            exit()
     except KeyboardInterrupt:
         if droneOn:
             print "\nCanary Disarm"
