@@ -13,23 +13,24 @@ from UltrasonicSensor import UltrasonicSensor
 import serial
 
 # Parameters
-droneOn = 0     # enable drone
+droneOn = input("Arm drone [0 - No, 1 - yes]: ")     # enable drone
+if droneOn:
+    droneOn = input("Are you sure [0 - No, 1 - yes]: ")     # enable drone
 logOn = 1       # enable data logging
 logVerbose = 1  # enable PID logging
-setpoint = 25   # set hover height [cm]
+setpoint = input("Setpoint [cm]: ")   # set hover height [cm]
 SMA_LENGTH = 3  # moving average taps
-THOVER = 1575	#
-TRANGE = 25		# Range of 
-TMIN = THOVER - TRANGE     # Minimum throttle value
-TMAX = THOVER + TRANGE     # Maximum throttle value
-ZMIN = 3        # Minimum valid measured height [cm]
-ZMAX = 200      # Maximum valid measured height [cm]
-Kt = 1        # Throttle gain [PWM/cm]
+THOVER = input("Hover Throttle: ")	#
+TRANGE = input("Throttle Span: ")		# Range of 
+Kt = input("Error Gain [pwm/cm]: ")        # Throttle gain [PWM/cm]
 
 # Init
 GPIO.setmode(GPIO.BOARD)
 sensor = UltrasonicSensor(32,31)
-
+TMIN = THOVER - TRANGE     # Minimum throttle value
+TMAX = THOVER + TRANGE     # Maximum throttle value
+ZMIN = 3        # Minimum valid measured height [cm]
+ZMAX = 200      # Maximum valid measured height [cm]
 height = 0
 throttle = 0
 dt = 0.1 
@@ -90,8 +91,8 @@ while True:
             f.write(data)
         if logVerbose:
             print "distIn: ",distIn," -- height: ",height," cm"
-            print "throttle: ",throttle," -- PID Output: ",Tpid
-            print "error: P)",error,",I)",iErr,",D)",dErr
+            print "throttle: ",throttle," -- Output: ",Tpid
+            print "error: ",error
         else:
             print "distIn: ",distIn," -- height: ",height," cm"
             print "throttle: ",throttle
