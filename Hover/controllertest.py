@@ -5,6 +5,7 @@
 #       Author:         Date:           Note:
 #       Patrick Cote    2/08/2018       Add moving average and error handling
 #       Patrick Cote    2/09/2018       Add PID Controller and logging
+#		Patrick Cote	3/03/2018		Modified for basic k testing
 import time
 from time import sleep
 import RPi.GPIO as GPIO
@@ -54,7 +55,7 @@ if droneOn:
         canary.disarm()
         exit()
 
-sleep(1)
+sleep(5)
 
 
 if logOn:
@@ -84,7 +85,7 @@ while True:
         # Data Output and Logging - CSV File: 
         # Time, distance measured, filtered height, throttle, Perror, Ierror, Derror, Controller Output,<CR>
         if logOn:
-            data = str(time.time())+','+str(distIn)+','+str(height)+','+str(throttle)+','
+            data = str(time.time())+','+str(height)+','+str(throttle)+','+str(distIn)
             if logVerbose:
                 data = data + str(error)+','+str(Tpid)+','
             data = data+'\n'
@@ -99,7 +100,7 @@ while True:
 
         sleep(dt)
         if droneOn:
-    	    canary.setThrottle(throttle)
+            canary.setThrottle(throttle)
     except KeyboardInterrupt:
         if droneOn:
             print "\nCanary Disarm"
