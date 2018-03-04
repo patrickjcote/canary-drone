@@ -24,10 +24,10 @@ logVerbose = 1  # enable Controller logging
 #TRANGE = input("Throttle Span: ")		# Range of
 #testDur = input("Test Duraction [s]: ")
 
-setpoint = 40
+setpoint = 50
 THOVER = 1600
 TRANGE = 50		# Range of
-testDur = 30
+testDur = 20
 SMA_LENGTH = 3  # moving average taps
 Kt = input("Error Gain [pwm/cm]: ")		# Throttle gain [PWM/cm]
 
@@ -46,6 +46,7 @@ distArray = [0]*SMA_LENGTH
 dist = 0
 
 print "---- Test Plan ----"
+print "Set point: ",setpoint
 print "Throttle Range of ",TMIN,"-",TMAX," w/  gain: ",Kt," for ",testDur,"s"
 
 if droneOn:
@@ -113,6 +114,11 @@ while True:
 			canary.setThrottle(throttle)
 		if time.time()>(tstart+testDur):
 			if droneOn:
+				print "\nCanary Landing..."
+				canary.setThrottle(1550)
+				sleep(.5)
+				canary.setThrottle(1500)
+				sleep(.5)
 				print "\nCanary Disarm"
 				canary.disarm()
 			GPIO.cleanup()
