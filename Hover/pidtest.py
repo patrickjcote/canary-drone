@@ -37,7 +37,7 @@ GPIO.setmode(GPIO.BOARD)
 sensor = UltrasonicSensor(32,31)
 TMIN = THOVER - TRANGE	 # Minimum throttle value
 TMAX = THOVER + TRANGE	 # Maximum throttle value
-ZMIN = 3		# Minimum valid measured height [cm]
+ZMIN = 0		# Minimum valid measured height [cm]
 ZMAX = 250	  # Maximum valid measured height [cm]
 height = 0
 throttle = 0
@@ -57,7 +57,7 @@ if droneOn:
 	canary = CanaryComm(0x08)
 	sleep(1)
 	canary.arm()
-	sleep(1)
+	sleep(2)
 	try:
 		canary.setThrottle(THOVER)
 	except KeyboardInterrupt:
