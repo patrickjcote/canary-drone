@@ -24,8 +24,8 @@ logVerbose = 1  # enable Controller logging
 #TRANGE = input("Throttle Span: ")		# Range of
 #testDur = input("Test Duraction [s]: ")
 
-setpoint = 50
-THOVER = 1600
+setpoint = 45
+THOVER = 1575
 TRANGE = 50		# Range of
 testDur = 20
 SMA_LENGTH = 3  # moving average taps
@@ -83,7 +83,7 @@ while True:
 		try:
 			distIn = sensor.getDistanceCM()
 		except:
-			pass
+			distIn = 0
 		# Moving Average Filter
 		if(distIn >= ZMIN and distIn <= ZMAX):
 			distArray.append(distIn)
