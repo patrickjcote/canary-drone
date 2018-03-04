@@ -1,12 +1,12 @@
-#Version 0.2
-#Authuor: 	Zach Burke
-#Date:		12/04/2017
-#Modified:
-
-#	   Author:		 Date:		   Note:
-#	   Patrick Cote	2/08/2018	   Add moving average and error handling
-#	   Patrick Cote	2/09/2018	   Add PID Controller and logging
+# File: controllertest.py
+# Version: 0.2
+# Author: 2018 - Patrick Cote
+# Description: Script to test basic hover controller
+#		Author:			Date:			Note:
+#		Patrick Cote	2/08/2018		Add moving average and error handling
+#		Patrick Cote	2/09/2018		Add PID Controller and logging
 #		Patrick Cote	3/03/2018		Modified for basic k testing
+
 import time
 from time import sleep
 import RPi.GPIO as GPIO
@@ -16,21 +16,21 @@ import serial
 
 # Parameters
 droneOn = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
-if droneOn:
-	droneOn = input("Are you sure [0 - No, 1 - yes]: ")	 # enable drone
 logOn = 1	   # enable data logging
-logVerbose = 1  # enable PID logging
+logVerbose = 1  # enable Controller logging
+
 #setpoint = input("Setpoint [cm]: ")   # set hover height [cm]
-SMA_LENGTH = 3  # moving average taps
 #THOVER = input("Hover Throttle: ")	#
-#TRANGE = input("Throttle Span: ")		# Range of 
-Kt = input("Error Gain [pwm/cm]: ")		# Throttle gain [PWM/cm]
+#TRANGE = input("Throttle Span: ")		# Range of
 #testDur = input("Test Duraction [s]: ")
 
-setpoint = 40 
+setpoint = 40
 THOVER = 1600
-TRANGE = 50		# Range of 
+TRANGE = 50		# Range of
 testDur = 30
+SMA_LENGTH = 3  # moving average taps
+Kt = input("Error Gain [pwm/cm]: ")		# Throttle gain [PWM/cm]
+
 
 # Init
 GPIO.setmode(GPIO.BOARD)
@@ -38,18 +38,18 @@ sensor = UltrasonicSensor(32,31)
 TMIN = THOVER - TRANGE	 # Minimum throttle value
 TMAX = THOVER + TRANGE	 # Maximum throttle value
 ZMIN = 3		# Minimum valid measured height [cm]
-ZMAX = 200	  # Maximum valid measured height [cm]
+ZMAX = 250	  # Maximum valid measured height [cm]
 height = 0
 throttle = 0
-dt = 0.1 
-Zrange = ZMAX-ZMIN
-Trange = TMAX-TMIN
+dt = 0.1
 distArray = [0]*SMA_LENGTH
 dist = 0
-dErr = 0
-iErr = 0
-Zprev = sensor.getDistanceCM()
-sleep(dt)
+
+print "---- Test Plan ----"
+print "Throttle Range of ",TMIN,"-",TMAX," w/  gain: ",Kt," for ",testDur,"s"
+
+if droneOn:
+	droneOn = input("Confirm drone arm [0 - No, 1 - yes]: ")	 # enable drone
 
 if droneOn:
 	canary = CanaryComm(0x08)
@@ -62,17 +62,21 @@ if droneOn:
 		canary.disarm()
 		exit()
 
+# Delay after setting the initial hover throttle to avoid ground effect
+# interfering with controller testing
 sleep(5)
-
 
 if logOn:
 	fname = 'logs/ktest/'
 	if droneOn == 0:
 		fname = fname+'x'
-	fname = fname+time.strftime("%Y.%m.%d.%H%M%S")+'.S'+str(setpoint)+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'+str(SMA_LENGTH)
+	fname = fname+time.strftime("%Y.%m.%d.%H%M%S")+'.S'+str(setpoint)
+	fname = fname+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'+str(SMA_LENGTH)
 	fname = fname+'K'+str(Kt)+'.csv'
 	f = open(fname,'a')
+
 tstart = time.time()
+
 while True:
 	try:
 		try:
@@ -84,13 +88,13 @@ while True:
 			distArray.append(distIn)
 			del distArray[0]
 			height = sum(distArray)/SMA_LENGTH
-		# PID Control
+		# Controller
 		error = (setpoint-height)
 		Tpid = error * Kt + THOVER
 		# Limit Throttle Values
 		throttle = int(min(max(Tpid,TMIN),TMAX))
-		# Data Output and Logging - CSV File: 
-		# Time, distance measured, filtered height, throttle, Perror, Ierror, Derror, Controller Output,<CR>
+		# Data Output and Logging - CSV File:
+		# Time, height, throttle, raw dist, error, controller out, <CR>
 		if logOn:
 			data = str(time.time())+','+str(height)+','+str(throttle)+','+str(distIn)
 			if logVerbose:
@@ -104,7 +108,6 @@ while True:
 		else:
 			print "distIn: ",distIn," -- height: ",height," cm"
 			print "throttle: ",throttle
-
 		sleep(dt)
 		if droneOn:
 			canary.setThrottle(throttle)
