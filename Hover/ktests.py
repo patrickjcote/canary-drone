@@ -19,10 +19,10 @@ droneOn = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 logOn = 1	   # enable data logging
 logVerbose = 1  # enable Controller logging
 
-setpoint = input("Setpoint [cm]: ")   # set hover height [cm]
-THOVER = input("Hover Throttle: ")	#
+setpoint = 40
+THOVER = 1585
 TRANGE = 50
-testDur = 15 
+testDur = 15
 
 SMA_LENGTH = 3  # moving average taps
 Kp = input("Kp Gain [pwm/cm]: ")		# Throttle gain [PWM/cm]
@@ -59,6 +59,10 @@ if droneOn:
 	canary.arm()
 	sleep(2)
 	try:
+		canary.setThrottle(1500)
+		sleep(1)
+		canary.setThrottle(1550)
+		sleep(1)
 		canary.setThrottle(THOVER)
 	except KeyboardInterrupt:
 		canary.disarm()
@@ -73,7 +77,7 @@ except:
 	Zprev = 0
 # Delay after setting the initial hover throttle to avoid ground effect
 # interfering with controller testing
-sleep(5)
+sleep(1)
 
 
 if logOn:
