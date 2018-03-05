@@ -1,11 +1,11 @@
-# File: pidtest.py
+# File: ktest.py
 # Version: 0.2
 # Author: 2018 - Patrick Cote
-# Description: Script to test basic hover controller
+# Description:	Script to test basic hover controller
+#				No user input
 #		Author:			Date:			Note:
-#		Patrick Cote	2/08/2018		Add moving average and error handling
-#		Patrick Cote	2/09/2018		Add PID Controller and logging
-#		Patrick Cote	3/03/2018		Modified for basic k testing
+#		Patrick Cote	3/03/2018		Copied from pidtest.py
+#		Patrick Cote	3/05/2018		Removed user input
 
 import time
 from time import sleep
