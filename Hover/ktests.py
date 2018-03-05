@@ -15,7 +15,7 @@ from UltrasonicSensor import UltrasonicSensor
 import serial
 
 # Parameters
-droneOn = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
+armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 logOn = 1	   # enable data logging
 logVerbose = 1  # enable Controller logging
 
@@ -50,10 +50,10 @@ print "---- Test Plan ----"
 print "Set point: ",setpoint
 print "Throttle Range of ",TMIN,"-",TMAX," for ",testDur,"s"
 print "P: ",Kp," I: ",Ki," Kd: ",Kd
-if droneOn:
-	droneOn = input("Confirm drone arm [0 - No, 1 - yes]: ")	 # enable drone
+if armDrone:
+	armDrone = input("Confirm drone arm [0 - No, 1 - yes]: ")	 # enable drone
 
-if droneOn:
+if armDrone:
 	canary = CanaryComm(0x08)
 	sleep(1)
 	canary.arm()
@@ -82,7 +82,7 @@ sleep(1)
 
 if logOn:
 	fname = 'logs/pidtests/'
-	if droneOn == 0:
+	if armDrone == 0:
 		fname = fname+'x'
 	fname = fname+time.strftime("%Y.%m.%d.%H%M%S")+'.S'+str(setpoint)
 	fname = fname+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'+str(SMA_LENGTH)
@@ -126,10 +126,10 @@ while True:
 			print "distIn: ",distIn," -- height: ",height," cm"
 			print "throttle: ",throttle
 		sleep(dt)
-		if droneOn:
+		if armDrone:
 			canary.setThrottle(throttle)
 		if time.time()>(tstart+testDur):
-			if droneOn:
+			if armDrone:
 				print "\nCanary Landing..."
 				canary.setThrottle(1550)
 				sleep(1)
@@ -142,7 +142,7 @@ while True:
 			print "\nTest Completed"
 			exit()
 	except KeyboardInterrupt:
-		if droneOn:
+		if armDrone:
 			print "\nCanary Disarm"
 			canary.disarm()
 			f.close()

@@ -11,7 +11,7 @@ from UltrasonicSensor import UltrasonicSensor
 from threading import Thread
 
 # Arm the Drone
-armDrone = 1
+armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 
 # Parameters
 maxThrottle = 1700
@@ -94,7 +94,8 @@ try:
 		print "\n----- Current Status -----"
 		print "   Throttle : ",throttle," | Roll: ",roll," | Pitch: ",pitch
 		print "\n----- Input Options ------"
-		print "   Pitch Up/Down: 1/2 | Roll Left/Right: 3/4 | Throttle Up/Down: 5/6 "
+		print "   Throttle:		Up - 5			Down - 6 "
+		print "   Pitch Up/Down: 1/2 | Roll Left/Right: 3/4"
 		print "   Disarm: 0 | Exit: -1 or <ctrl>+c"
 
 		try:
