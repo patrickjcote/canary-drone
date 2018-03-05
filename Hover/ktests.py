@@ -8,7 +8,7 @@
 #		Patrick Cote	3/05/2018		Removed user input
 
 import time
-from time import sleep
+from time import sleep, strftime, time
 import RPi.GPIO as GPIO
 from CanaryComm import CanaryComm
 from UltrasonicSensor import UltrasonicSensor

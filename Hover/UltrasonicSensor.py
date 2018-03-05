@@ -13,14 +13,14 @@ class UltrasonicSensor():
 	def getDistanceCM(self):
 		GPIO.output(self.trig, True)
 		time.sleep(0.00001)
-			GPIO.output(self.trig, False)
-			while GPIO.input(self.echo)==0:
-				start = time.time()
-		 	while GPIO.input(self.echo)==1:
-				end = time.time()
+		GPIO.output(self.trig, False)
+		while GPIO.input(self.echo)==0:
+			start = time.time()
+		while GPIO.input(self.echo)==1:
+			end = time.time()
 
-			pulse = (end-start)*34300/2
-			time.sleep(0.1)
+		pulse = (end-start)*34300/2
+		time.sleep(0.1)
 		return pulse
 
 
