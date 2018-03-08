@@ -10,7 +10,7 @@ class CanaryComm:
 
 	# Set Individual Channels
 	def setThrottle(self,throttle):
-		self.channel[0] = throttle
+		self.channel[0] = int(throttle)
 		self.updateState()
 	def setRoll(self,roll):
 		self.channel[1] = roll
@@ -27,7 +27,7 @@ class CanaryComm:
 
 	# Set States
 	def arm(self):
-		self.channel = [1000,1497,1489,1500,1750]
+		self.channel = [1000,1506,1490,1500,1750]
 		self.updateState()
 
 	def disarm(self):

@@ -19,10 +19,12 @@ droneOn = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 logOn = 1	   # enable data logging
 logVerbose = 1  # enable Controller logging
 
-setpoint = input("Setpoint [cm]: ")   # set hover height [cm]
-THOVER = input("Hover Throttle: ")	#
-TRANGE = input("Throttle Span: ")		# Range of
-testDur = input("Test Duraction [s]: ")
+setpoint = 50
+THOVER = 1610
+TMAX = 1700	 # Minimum throttle value
+TMIN = 1575 # Maximum throttle value
+TRANGE = 50
+testDur = 20
 
 SMA_LENGTH = 3  # moving average taps
 Kp = input("Kp Gain [pwm/cm]: ")		# Throttle gain [PWM/cm]
@@ -35,8 +37,6 @@ fs = 10         # Sample Rate [samples/sec]
 # Init
 GPIO.setmode(GPIO.BOARD)
 sensor = UltrasonicSensor(32,31)
-TMIN = THOVER - TRANGE	 # Minimum throttle value
-TMAX = THOVER + TRANGE	 # Maximum throttle value
 ZMIN = 0		# Minimum valid measured height [cm]
 ZMAX = 250	  # Maximum valid measured height [cm]
 height = 0
@@ -59,6 +59,14 @@ if droneOn:
 	canary.arm()
 	sleep(2)
 	try:
+		canary.setThrottle(THOVER*.6)
+		sleep(.1)
+		canary.setThrottle(THOVER*.7)
+		sleep(.1)
+		canary.setThrottle(THOVER*.8)
+		sleep(.1)
+		canary.setThrottle(THOVER*.9)
+		sleep(.1)
 		canary.setThrottle(THOVER)
 	except KeyboardInterrupt:
 		canary.disarm()
@@ -73,7 +81,7 @@ except:
 	Zprev = 0
 # Delay after setting the initial hover throttle to avoid ground effect
 # interfering with controller testing
-sleep(5)
+sleep(4)
 
 
 if logOn:
@@ -103,7 +111,7 @@ while True:
 		iErr = iErr + error*dt
 		dErr = (height-Zprev)/dt
 		Zprev = height
-		Tpid = (Kp*error+Ki*iErr-Kd*dErr) + THOVER
+		Tpid = Kp*error+Ki*iErr-Kd*dErr + THOVER
 		# Limit Throttle Values
 		throttle = int(min(max(Tpid,TMIN),TMAX))
 		# Data Output and Logging - CSV File:

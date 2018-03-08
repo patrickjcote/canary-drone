@@ -20,7 +20,9 @@ logOn = 1	   # enable data logging
 logVerbose = 1  # enable Controller logging
 
 setpoint = 50
-THOVER = 1585
+THOVER = 1610
+TMAX = 1700	 # Minimum throttle value
+TMIN = 1575 # Maximum throttle value
 TRANGE = 50
 testDur = 20
 
@@ -35,8 +37,6 @@ fs = 10         # Sample Rate [samples/sec]
 # Init
 GPIO.setmode(GPIO.BOARD)
 sensor = UltrasonicSensor(32,31)
-TMIN = THOVER - TRANGE	 # Minimum throttle value
-TMAX = THOVER + TRANGE	 # Maximum throttle value
 ZMIN = 0		# Minimum valid measured height [cm]
 ZMAX = 250	  # Maximum valid measured height [cm]
 height = 0
@@ -59,6 +59,14 @@ if droneOn:
 	canary.arm()
 	sleep(2)
 	try:
+		canary.setThrottle(THOVER*.6)
+		sleep(.1)
+		canary.setThrottle(THOVER*.7)
+		sleep(.1)
+		canary.setThrottle(THOVER*.8)
+		sleep(.1)
+		canary.setThrottle(THOVER*.9)
+		sleep(.1)
 		canary.setThrottle(THOVER)
 	except KeyboardInterrupt:
 		canary.disarm()
