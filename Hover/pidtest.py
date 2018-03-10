@@ -41,7 +41,7 @@ ZMIN = 0		# Minimum valid measured height [cm]
 ZMAX = 250	  # Maximum valid measured height [cm]
 height = 0
 throttle = 0
-dt = 0.1
+dt = 0.33
 distArray = [0]*SMA_LENGTH
 dist = 0
 dErr = 0
@@ -95,12 +95,14 @@ if logOn:
 
 tstart = time.time()
 
+throttle = THOVER
+distIn = 0
 while True:
 	try:
 		try:
 			distIn = sensor.getDistanceCM()
 		except:
-			distIn = 0
+			pass
 		# Moving Average Filter
 		if(distIn >= ZMIN and distIn <= ZMAX):
 			distArray.append(distIn)
@@ -109,9 +111,9 @@ while True:
 		# Controller
 		error = (setpoint-height)
 		iErr = iErr + error*dt
-		dErr = (height-Zprev)/dt
-		Zprev = height
-		Tpid = Kp*error+Ki*iErr-Kd*dErr + THOVER
+		dErr = (error-eprev)/dt
+		eprev = dErr
+		Tpid = Kp*error+Ki*iErr+Kd*dErr + throttle
 		# Limit Throttle Values
 		throttle = int(min(max(Tpid,TMIN),TMAX))
 		# Data Output and Logging - CSV File:
@@ -122,13 +124,9 @@ while True:
 				data = data + str(error)+','+str(Tpid)+','
 			data = data+'\n'
 			f.write(data)
-		if logVerbose:
 			print "distIn: ",distIn," -- height: ",height," cm"
 			print "throttle: ",throttle," -- Output: ",Tpid
 			print "error: ",error
-		else:
-			print "distIn: ",distIn," -- height: ",height," cm"
-			print "throttle: ",throttle
 		sleep(dt)
 		if droneOn:
 			canary.setThrottle(throttle)
