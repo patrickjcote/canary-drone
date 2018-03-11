@@ -1,5 +1,5 @@
 # File: hoverController.py
-# Version: 0.01
+# Version: 0.1 - untested
 # Author: 2018 - Patrick Cote
 # Description: Hover Controller with i2c sensor read and threading
 
@@ -10,7 +10,6 @@ from SensorComm import SensorComm
 from CanaryComm import CanaryComm
 from threading import Thread
 import serial
-
 
 # Init Classes
 sensors = SensorComm(0x10)
@@ -30,7 +29,7 @@ Kp = input("Kp Gain : ")		# Proportional gain
 Ki = input("Ki Gain : ")		# Integral gain
 Kd = input("Kd Gain : ")		# Derivative gain
 
-# Display Current Test Plan
+# Display Test Parameters
 print "---- Test Plan ----"
 print "Set point: ",setpoint
 print "Throttle Range of ",TMIN,"-",TMAX," for ",testDur,"s"
@@ -43,8 +42,8 @@ if armDrone:
 # --------------- Init Threading ----------------------------------------------
 # Flight Value Thread Function
 def _FlighValuesThread():
-	global throttle, canary, flightFlag, armDrone
-	while flightThreadOn:
+	global throttle, canary, flightThreadFlag, flightThreadEnable, armDrone
+	while flightThreadFlag:
 		if flightThreadEnable:
 			try:
 				canary.setThrottle(throttle)
@@ -54,20 +53,20 @@ def _FlighValuesThread():
 
 # Sensor read thread Function
 def _SensorThread():
-	global height, sensors, sensorFlag
-	while sensorFlag:
+	global height, sensors, sensorThreadFlag
+	while sensorThreadFlag:
 		height = sensors.readSingle(1)
 		sleep(.06)
 
 
 if armDrone:
-	flightThreadOn = 1
+	flightThreadFlag = 1
 	flightThreadEnable = 0
 	flightThread = Thread(target=_FlightValuesThread)
 	flightThread.start()
 	sleep(.01)
 
-sensorFlag = 1
+sensorThreadFlag = 1
 sensorThread = Thread(target=_SensorThread)
 sensorThread.start()
 sleep(.01)
@@ -89,13 +88,10 @@ if armDrone:
 		canary.setThrottle(THOVER*.9)
 		sleep(.15)
 		canary.setThrottle(THOVER)
+		sleep(2)
 	except KeyboardInterrupt:
 		canary.disarm()
 		exit()
-
-# Delay after setting the initial hover throttle to avoid ground effect
-# interfering with controller testing
-sleep(4)
 
 # --------------- Init Controller ---------------------------------------------
 height = sensors.distance[0]
@@ -103,6 +99,7 @@ throttle = THOVER
 dt = 0.33
 dErr = 0
 iErr = 0
+flightThreadEnable = 1
 
 # --------------- Test Start --------------------------------------------------
 tstart = time.time()
@@ -142,12 +139,13 @@ while time.time()<(tstart+testDur):
 		if logOn:
 			f.close()
 		GPIO.cleanup()
-		sensorFlag = 0
+		sensorThreadFlag = 0
 		print "\nKeyboard Exit"
 		exit()
 # --------------- Test Complete   ---------------------------------------------
 
 if armDrone:
+	# TODO: Proper landing sequence
 	print "\nCanary Landing..."
 	canary.setThrottle(1550)
 	sleep(1)
@@ -155,8 +153,8 @@ if armDrone:
 	sleep(2)
 	print "\nCanary Disarm"
 	canary.disarm()
-	flightFlag = 0
-sensorFlag = 0
+	flightThreadFlag = 0
+sensorThreadFlag = 0
 f.close()
 GPIO.cleanup()
 if logOn:
