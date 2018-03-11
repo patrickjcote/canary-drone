@@ -8,15 +8,23 @@ class SensorComm:
 		self.distance = [0,0,0,0,0,0]
 
 	def write(self,cmd):
-		self.bus.write_byte_data(self.address, 0, map(ord,cmd))
+		try:
+			self.bus.write_byte_data(self.address, 0, map(ord,cmd))
+		except:
+			print "Sensor i2c write error"
 
 	def readAll(self):
 		self.write('A')
 		sleep(.01)
-		self.distance = self.bus.read_i2c_block_data(self.address, 6)
+		try:
+			self.distance = self.bus.read_i2c_block_data(self.address, 6)
+		except:
+			print "Sensor i2c read error"
 
 	def readSingle(self,cmd):
 		self.write(cmd)
 		sleep(.01)
-		self.distance = self.bus.read_i2c_block_data(self.address, 0, 6)
-
+		try:
+			self.distance = self.bus.read_i2c_block_data(self.address, 0, 6)
+		except:
+			print "Sensor i2c read error"

@@ -24,8 +24,12 @@ class CanaryComm:
 	def setArm(self,arm):
 		self.channel[4] = arm
 		self.updateState()
+	
+	def setAll(self,allChannels):
+		self.channel = allChannels
+		self.updateState()
 
-	# Set States
+	# Arm and Disarm States
 	def arm(self):
 		self.channel = [1000,1506,1490,1500,1750]
 		self.updateState()

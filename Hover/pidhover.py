@@ -31,7 +31,7 @@ SMA_LENGTH = 3  # moving average taps
 Kp = input("Kp Gain : ")		# Proportional gain
 Ki = input("Ki Gain : ")		# Integral gain
 Kd = input("Kd Gain : ")		# Derivative gain
-fs = 10         # Sample Rate [samples/sec]
+fs = 10							# Sample Rate [samples/sec]
 
 
 
