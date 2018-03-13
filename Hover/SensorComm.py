@@ -21,8 +21,9 @@ class SensorComm:
 		except:
 			print "Sensor i2c read error"
 
+	# Read a Single Sensor cmd = 0-5, sent as ASCII
 	def readSingle(self,cmd):
-		self.write(cmd)
+		self.write(cmd+0x30)
 		sleep(.01)
 		try:
 			self.distance = self.bus.read_i2c_block_data(self.address, 0, 6)

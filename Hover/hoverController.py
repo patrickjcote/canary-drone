@@ -55,7 +55,7 @@ def _FlighValuesThread():
 def _SensorThread():
 	global height, sensors, sensorThreadFlag
 	while sensorThreadFlag:
-		height = sensors.readSingle(1)
+		height = sensors.readSingle(0)
 		sleep(.06)
 
 
@@ -118,16 +118,15 @@ while time.time()<(tstart+testDur):
 		throttle = int(min(max(Tpid,TMIN),TMAX))
 		
 		# Logging - CSV File:
-		# Time, height, throttle, raw dist, error, controller out, <CR>
+		# Time, height, throttle, error, controller out, <CR>
 		if logOn:
-			data = str(time.time())+','+str(height)+','+str(throttle)+','+str(distIn)+','
+			data = str(time.time())+','+str(height)+','+str(throttle)+','
 			data = data + str(error)+','+str(Tpid)+','
 			data = data+'\n'
 			f.write(data)
 		# Status Output
-		print "distIn: ",distIn," -- height: ",height," cm"
-		print "throttle: ",throttle," -- Output: ",Tpid
-		print "error: ",error
+		print "Height: ",height,"cm","   Error: ",error
+		print "Set Throttle: ",throttle,"    Controller Output: ",Tpid
 		
 		sleep(.1)
 		
