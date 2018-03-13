@@ -3,30 +3,28 @@ import time
 import smbus
 
 class SonicComm:
-    
-    def __init__(self, address):
-        self.bus = smbus.SMBus(1)
-        self.address = address
+	
+	def __init__(self, address):
+		self.bus = smbus.SMBus(1)
+		self.address = address
 
-    def write(self,cmd):
-        self.bus.write_i2c_block_data(self.address, 0 , map(ord,cmd))
+	def write(self,data):
+		self.bus.write_i2c_block_data(self.address, 0 , data)
 
-    def readOne(self):
-        self.readArray =  self.bus.read_i2c_block_data(self.address, 3)
-        print self.readArray[0]
+	def readOne(self):
+		self.readArray =  self.bus.read_i2c_block_data(self.address, 3)
+		return self.readArray[0]
 
-    def read(self):
-        self.readArray =  self.bus.read_i2c_block_data(self.address, 3)
-        print self.readArray[0:6]
+	def read(self):
+		self.readArray =  self.bus.read_i2c_block_data(self.address, 3)
+		a = self.readArray
+		print '{0:3d} {1:3d}'.format(a[1], a[2])
 
 
-x = SonicComm(0x52)
+x = SonicComm(0x08)
 while 1:
-	x.write("A")
+	data = [ord('A')]
+	x.write(data)
 	time.sleep(.01)
-	x.read()
-	time.sleep(.1)
-	x.write("1")
-	time.sleep(.01)
-	x.readOne()
-	time.sleep(.1)
+	a = x.read()
+	time.sleep(.06)
