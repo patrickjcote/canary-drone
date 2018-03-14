@@ -12,13 +12,13 @@ from threading import Thread
 import serial
 
 # Init Classes
-sensors = SensorComm(0x10)
+sensors = SensorComm(0x52)
 canary = CanaryComm(0x08)
 
 # --------------- Test Settings------------------------------------------------
 armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 logOn = 1		# enable data logging
-setpoint = 50	# [cm]
+setpoint = 20	# [cm]
 THOVER = 1610	# Initial Throttle
 TMAX = 1700		# Max throttle value
 TMIN = 1550		# Min throttle value
@@ -40,6 +40,7 @@ if armDrone:
 	armDrone = input("Confirm drone arm [0 - No, 1 - yes]: ")	 # enable drone
 
 # --------------- Init Threading ----------------------------------------------
+global height
 # Flight Value Thread Function
 def _FlighValuesThread():
 	global throttle, canary, flightThreadFlag, flightThreadEnable, armDrone
@@ -55,9 +56,8 @@ def _FlighValuesThread():
 def _SensorThread():
 	global height, sensors, sensorThreadFlag
 	while sensorThreadFlag:
-		height = sensors.readSingle(0)
+		height = sensors.readSingle('1')
 		sleep(.06)
-
 
 if armDrone:
 	flightThreadFlag = 1
@@ -69,7 +69,7 @@ if armDrone:
 sensorThreadFlag = 1
 sensorThread = Thread(target=_SensorThread)
 sensorThread.start()
-sleep(.01)
+sleep(1)
 
 # --------------- Takeoff Sequence---------------------------------------------
 if armDrone:
@@ -94,39 +94,51 @@ if armDrone:
 		exit()
 
 # --------------- Init Controller ---------------------------------------------
-height = sensors.distance[0]
 throttle = THOVER
 dt = 0.33
 dErr = 0
 iErr = 0
+heightPrev = height
 flightThreadEnable = 1
-
+IMAX = TMAX-TMIN
+IMIN = -IMAX
 # --------------- Test Start --------------------------------------------------
-tstart = time.time()
+tstart = time()
 
-while time.time()<(tstart+testDur):
+if logOn:
+	fname = 'logs/hcontroller/'
+	if armDrone == 0:
+		fname = fname+'x'
+	fname = fname+strftime("%Y.%m.%d.%H%M%S")+'.S'+str(setpoint)
+	fname = fname+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'
+	fname = fname+'PID'+str(Kp)+'-'+str(Ki)+'-'+str(Kd)+'.csv'
+	f = open(fname,'a')
+
+
+while time()<(tstart+testDur):
 	try:
-		height = sensors.distance[0]
 		# Controller
 		error = (setpoint-height)
 		iErr = iErr + error*dt
-		dErr = (error-eprev)/dt
-		eprev = dErr
-		Tpid = Kp*error+Ki*iErr+Kd*dErr + throttle
-		
+		dErr = (height-heightPrev)/dt
+		heightPrev = height
+		Tpid = Kp*error+Ki*iErr-Kd*dErr + throttle
+		# Anti-windup reset
+		iErr = min(max(iErr,IMIN),IMAX)
 		# Limit Throttle Values
 		throttle = int(min(max(Tpid,TMIN),TMAX))
 		
 		# Logging - CSV File:
 		# Time, height, throttle, error, controller out, <CR>
 		if logOn:
-			data = str(time.time())+','+str(height)+','+str(throttle)+','
+			data = str(time())+','+str(height)+','+str(throttle)+','
 			data = data + str(error)+','+str(Tpid)+','
 			data = data+'\n'
 			f.write(data)
 		# Status Output
 		print "Height: ",height,"cm","   Error: ",error
 		print "Set Throttle: ",throttle,"    Controller Output: ",Tpid
+		print "Ierr: {0:4d}  Derr: {1:4d}".format(int(iErr),int(dErr))
 		
 		sleep(.1)
 		
