@@ -18,10 +18,10 @@ class SonicComm:
 	def read(self):
 		self.readArray =  self.bus.read_i2c_block_data(self.address, 3)
 		a = self.readArray
-		print '{0:3d} {1:3d}'.format(a[1], a[2])
+		print '{0:3d} {1:3d} {2:3d}'.format(a[1], a[2], a[3])
 
 
-x = SonicComm(0x08)
+x = SonicComm(0x52)
 while 1:
 	data = [ord('A')]
 	x.write(data)
