@@ -9,7 +9,7 @@ from time import sleep, strftime, time
 from SensorComm import SensorComm
 from CanaryComm import CanaryComm
 from threading import Thread
-import serial
+#import serial
 
 # Init Classes
 sensors = SensorComm(0x52)
@@ -138,7 +138,7 @@ while time()<(tstart+testDur):
 		# Status Output
 		print "Height: ",height,"cm","   Error: ",error
 		print "Set Throttle: ",throttle,"    Controller Output: ",Tpid
-		print "Ierr: {0:4d}  Derr: {1:4d}".format(int(iErr),int(dErr))
+		print "Height: {0:3d} Perr: {1:3d} Ierr: {2:4d}  Derr: {3:4d}".format(height,error,int(iErr),int(dErr))
 		
 		sleep(.1)
 		
