@@ -18,10 +18,10 @@ canary = CanaryComm(0x08)
 # --------------- Test Settings------------------------------------------------
 armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 logOn = 1		# enable data logging
-setpoint = 20	# [cm]
+setpoint = 40	# [cm]
 THOVER = 1610	# Initial Throttle
-TMAX = 1700		# Max throttle value
-TMIN = 1550		# Min throttle value
+TMAX = 1900		# Max throttle value
+TMIN = 1100		# Min throttle value
 testDur = 20	# Length of test [s]
 
 # Controller Gains
@@ -42,7 +42,7 @@ if armDrone:
 # --------------- Init Threading ----------------------------------------------
 global height
 # Flight Value Thread Function
-def _FlighValuesThread():
+def _FlightValuesThread():
 	global throttle, canary, flightThreadFlag, flightThreadEnable, armDrone
 	while flightThreadFlag:
 		if flightThreadEnable:
@@ -95,13 +95,13 @@ if armDrone:
 
 # --------------- Init Controller ---------------------------------------------
 throttle = THOVER
-dt = 0.33
+dt = 1
 dErr = 0
 iErr = 0
 heightPrev = height
 flightThreadEnable = 1
-IMAX = TMAX-TMIN
-IMIN = -IMAX
+IMAX = 25
+IMIN = -25
 # --------------- Test Start --------------------------------------------------
 tstart = time()
 
@@ -120,11 +120,11 @@ while time()<(tstart+testDur):
 		# Controller
 		error = (setpoint-height)
 		iErr = iErr + error*dt
+		# Anti-windup reset
+		iErr = min(max(iErr,IMIN),IMAX)
 		dErr = (height-heightPrev)/dt
 		heightPrev = height
 		Tpid = Kp*error+Ki*iErr-Kd*dErr + throttle
-		# Anti-windup reset
-		iErr = min(max(iErr,IMIN),IMAX)
 		# Limit Throttle Values
 		throttle = int(min(max(Tpid,TMIN),TMAX))
 		
