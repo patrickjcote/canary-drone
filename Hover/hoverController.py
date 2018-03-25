@@ -54,9 +54,10 @@ def _FlightValuesThread():
 
 # Sensor read thread Function
 def _SensorThread():
-	global height, sensors, sensorThreadFlag
+	global height, sensors, sensorThreadFlag, heightUpdated
 	while sensorThreadFlag:
 		height = sensors.readSingle('1')
+		heightUpdated = 1
 		sleep(.06)
 
 if armDrone:
@@ -66,6 +67,7 @@ if armDrone:
 	flightThread.start()
 	sleep(.01)
 
+heightUpdated = 0
 sensorThreadFlag = 1
 sensorThread = Thread(target=_SensorThread)
 sensorThread.start()
@@ -141,13 +143,15 @@ while time()<(tstart+testDur):
 		print "Set Throttle: ",throttle,"    Controller Output: ",Tpid
 		print "Height: {0:3d} Perr: {1:3d} Ierr: {2:4d}  Derr: {3:4d}".format(height,error,int(iErr),int(dErr))
 		
-		sleep(.1)
+		heightUpdated = 0
+		while not heightUpdated:
+			pass
 		
 	except KeyboardInterrupt:
 		if armDrone:
 			print "\nCanary Disarm"
 			canary.disarm()
-			flightFlag = 0
+			flightThreadFlag = 0
 		if logOn:
 			f.close()
 		GPIO.cleanup()
