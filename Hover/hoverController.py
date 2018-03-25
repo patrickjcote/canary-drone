@@ -78,17 +78,18 @@ if armDrone:
 	canary.arm()
 	sleep(2)
 	# Take off Sequence
+	tTakeoff = time()
 	try:
-		canary.setThrottle(THOVER*.6)
-		sleep(.15)
-		canary.setThrottle(THOVER*.7)
-		sleep(.15)
-		canary.setThrottle(THOVER*.8)
-		sleep(.15)
-		canary.setThrottle(THOVER*.9)
-		sleep(.15)
-		canary.setThrottle(THOVER)
-		sleep(2)
+		while time()<(tTakeoff + .15):
+			canary.setThrottle(THOVER*.6)
+		while time()<(tTakeoff + .25):
+			canary.setThrottle(THOVER*.7)
+		while time()<(tTakeoff + .35):
+			canary.setThrottle(THOVER*.8)
+		while time()<(tTakeoff + .45):
+			canary.setThrottle(THOVER*.9)
+		while time()<(tTakeoff + 1.5):
+			canary.setThrottle(THOVER)
 	except KeyboardInterrupt:
 		canary.disarm()
 		exit()
