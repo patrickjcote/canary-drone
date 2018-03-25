@@ -18,10 +18,10 @@ canary = CanaryComm(0x08)
 # --------------- Test Settings------------------------------------------------
 armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 logOn = 1		# enable data logging
-setpoint = 60	# [cm]
-THOVER = 1610	# Initial Throttle
-TMAX = 1750		# Max throttle value
-TMIN = 1550		# Min throttle value
+setpoint = 50	# [cm]
+THOVER = 1615	# Initial Throttle
+TMAX = 1650		# Max throttle value
+TMIN = 1625		# Min throttle value
 testDur = 10	# Length of test [s]
 
 # Controller Gains
@@ -160,10 +160,10 @@ if armDrone:
 	# TODO: Proper landing sequence
 	print "\nCanary Landing..."
 	tTakeoff = time()
-	while time()<(tTakeoff + 1):
+	while time()<(tTakeoff + 2):
 		canary.setThrottle(1550)
 	while time()<(tTakeoff + 3):
-		canary.setThrottle(1500)
+		canary.setThrottle(1525)
 	print "\nCanary Disarm"
 	canary.disarm()
 	flightThreadFlag = 0
