@@ -19,10 +19,11 @@ canary = CanaryComm(0x08)
 armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 logOn = 1		# enable data logging
 setpoint = 50	# [cm]
-THOVER = 1615	# Initial Throttle
-TMAX = 1650		# Max throttle value
-TMIN = 1625		# Min throttle value
-testDur = 10	# Length of test [s]
+THOVER = 1610	# Initial Throttle
+TMAX = 1660		# Max throttle value
+TMIN = 1580# Min throttle value
+testDur = 25	# Length of test [s]
+SMA_LENGTH = 3
 
 # Controller Gains
 Kp = input("Kp Gain : ")		# Proportional gain
@@ -55,8 +56,12 @@ def _FlightValuesThread():
 # Sensor read thread Function
 def _SensorThread():
 	global height, sensors, sensorThreadFlag, heightUpdated
+	distArray = [0]*SMA_LENGTH
 	while sensorThreadFlag:
-		height = sensors.readSingle('1')
+		distIn = sensors.readSingle('1')
+		distArray.append(distIn)
+		del distArray[0]
+		height = sum(distArray)/SMA_LENGTH
 		heightUpdated = 1
 		sleep(.06)
 
