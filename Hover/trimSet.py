@@ -28,7 +28,7 @@ dt = .01  # Delay for throttle ramps
 # Function for set throttle thread
 def setThrottle():
 	while True:
-		global throttle, canary, height, dist, f, pitch, roll
+		global throttle, canary, height, f, pitch, roll
 		if throttle>0:
 			if throttle == 1000:
 				pass
@@ -54,12 +54,6 @@ def setThrottle():
 			except:
 				print "Set roll failed"
 		sensor = UltrasonicSensor(32,31)
-		try:
-			dist = sensor.getDistanceCM()
-		except:
-			pass
-		if(dist > 4 and dist < 400):
-			height = dist
 		try:
 			if armDrone:
 				canary.setThrottle(throttle)

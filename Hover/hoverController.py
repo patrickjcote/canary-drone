@@ -18,11 +18,14 @@ canary = CanaryComm(0x08)
 # --------------- Test Settings------------------------------------------------
 armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 logOn = 1		# enable data logging
-setpoint = 50	# [cm]
-THOVER = 1610	# Initial Throttle
-TMAX = 1660		# Max throttle value
-TMIN = 1580# Min throttle value
+setpoint = 55	# [cm]
 testDur = 25	# Length of test [s]
+# Limits
+TMAX = 1780		# Max throttle value
+TMIN = 1600# Min throttle value
+TMID = 1630	# Initial Throttle
+IMAX = 5000
+IMIN = -5000
 SMA_LENGTH = 3
 
 # Controller Gains
@@ -88,28 +91,26 @@ if armDrone:
 	tTakeoff = time()
 	try:
 		while time()<(tTakeoff + .15):
-			canary.setThrottle(THOVER*.6)
+			canary.setThrottle(TMID*.6)
 		while time()<(tTakeoff + .25):
-			canary.setThrottle(THOVER*.7)
+			canary.setThrottle(TMID*.7)
 		while time()<(tTakeoff + .35):
-			canary.setThrottle(THOVER*.8)
+			canary.setThrottle(TMID*.8)
 		while time()<(tTakeoff + .45):
-			canary.setThrottle(THOVER*.9)
+			canary.setThrottle(TMID*.9)
 		while time()<(tTakeoff + 1.5):
-			canary.setThrottle(THOVER)
+			canary.setThrottle(TMID)
 	except KeyboardInterrupt:
 		canary.disarm()
 		exit()
 
 # --------------- Init Controller ---------------------------------------------
-throttle = THOVER
+throttle = TMID
 dt = 1
 dErr = 0
 iErr = 0
 heightPrev = height
 flightThreadEnable = 1
-IMAX = 25
-IMIN = -25
 # --------------- Test Start --------------------------------------------------
 tstart = time()
 
@@ -132,7 +133,7 @@ while time()<(tstart+testDur):
 		iErr = min(max(iErr,IMIN),IMAX)
 		dErr = (height-heightPrev)/dt
 		heightPrev = height
-		Tpid = Kp*error+Ki*iErr-Kd*dErr + throttle
+		Tpid = Kp*error+Ki*iErr-Kd*dErr + TMID
 		# Limit Throttle Values
 		throttle = int(min(max(Tpid,TMIN),TMAX))
 		
@@ -170,9 +171,9 @@ if armDrone:
 	print "\nCanary Landing..."
 	tTakeoff = time()
 	while time()<(tTakeoff + 2):
-		canary.setThrottle(1550)
-	while time()<(tTakeoff + 3):
-		canary.setThrottle(1525)
+		canary.setThrottle(1580)
+	while time()<(tTakeoff + 2.5):
+		canary.setThrottle(1575)
 	print "\nCanary Disarm"
 	canary.disarm()
 	flightThreadFlag = 0
