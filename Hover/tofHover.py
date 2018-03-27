@@ -5,25 +5,56 @@
 
 # Libraries
 import RPi.GPIO as GPIO
+import VL53L0X
 from time import sleep, strftime, time
 from SensorComm import SensorComm
 from CanaryComm import CanaryComm
 from threading import Thread
-import VL53L0X
 #import serial
 
 # Init Classes
 sensors = SensorComm(0x52)
 canary = CanaryComm(0x08)
 
+#Initialize ToF sensor----------------------------------------------------------
+# GPIO for Sensor 1 shutdown pin
+sensor1_shutdown = 7
+GPIO.setwarnings(False)
+
+# Setup GPIO for shutdown pins on each VL53L0X
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(sensor1_shutdown, GPIO.OUT)
+
+# Set all shutdown pins low to turn off each VL53L0X
+GPIO.output(sensor1_shutdown, GPIO.LOW)
+
+# Keep all low for 500 ms or so to make sure they reset
+sleep(0.50)
+
+# Create one object per VL53L0X passing the address to give to
+# each.
+tof = VL53L0X.VL53L0X(address=0x2B)
+
+# Set shutdown pin high for the first VL53L0X then
+# call to start ranging
+GPIO.output(sensor1_shutdown, GPIO.HIGH)
+sleep(0.50)
+tof.start_ranging(VL53L0X.VL53L0X_LONG_RANGE_MODE)
+#End ToF sensor initialization--------------------------------------------------
+
+
 # --------------- Test Settings------------------------------------------------
 armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 logOn = 1		# enable data logging
-setpoint = 50	# [cm]
-THOVER = 1615	# Initial Throttle
-TMAX = 1650		# Max throttle value
-TMIN = 1625		# Min throttle value
-testDur = 10	# Length of test [s]
+setpoint = 55	# [cm]
+testDur = 25	# Length of test [s]
+# Limits
+TMAX = 1760		# Max throttle value
+TMIN = 1600# Min throttle value
+TMID = 1670	# Initial Throttle
+IMAX = 70
+IMIN = -70
+SMA_LENGTH = 3
 
 # Controller Gains
 Kp = input("Kp Gain : ")		# Proportional gain
@@ -45,25 +76,30 @@ global height
 # Flight Value Thread Function
 def _FlightValuesThread():
 	global throttle, canary, flightThreadFlag, flightThreadEnable, armDrone
+	global height, sensors, sensorThreadFlag, heightUpdated
+	distArray = [0]*SMA_LENGTH
 	while flightThreadFlag:
 		if flightThreadEnable:
 			try:
 				canary.setThrottle(throttle)
 			except:
 				print "Throttle set error"
-			sleep(.06)
+			#sleep(.006)
+			flightThreadEnable = 0
 
 # Sensor read thread Function
-def _SensorThread():
-	global height, tof, sensorThreadFlag, heightUpdated
-	while sensorThreadFlag:
-		distance = tof.get_distance()
-		if (distance > 0 and distance < 400):
-			height = distance
+#def _SensorThread():
+#	while sensorThreadFlag:
+		try:
+			distIn = (tof.get_distance())/10
+			if(distIn > 0 and distIn < 200):
+				distArray.append(distIn)
+				del distArray[0]
+			height = sum(distArray)/SMA_LENGTH
+			sleep(.01)
+		except:
+			print "Dist error"
 		heightUpdated = 1
-		sleep(.001)
-	tof.stop_ranging()
-	GPIO.output(sensor1_shutdown, GPIO.LOW)
 
 if armDrone:
 	flightThreadFlag = 1
@@ -72,23 +108,10 @@ if armDrone:
 	flightThread.start()
 	sleep(.01)
 
-# Init ToF Sensor
-# Shutdown Pin -- Don't think we need this with one sensor?
-sensor1_shutdown = 36
-# Setup GPIO for shutdown pins on each VL53L0X
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(sensor1_shutdown, GPIO.OUT)
-tof = VL53L0X.VL53L0X(address=0x2B)
-# Set shutdown pin high for the first VL53L0X then 
-# call to start ranging 
-GPIO.output(sensor1_shutdown, GPIO.HIGH)
-sleep(0.50)
-tof.start_ranging(VL53L0X.VL53L0X_BETTER_ACCURACY_MODE)
-
 heightUpdated = 0
-sensorThreadFlag = 1
-sensorThread = Thread(target=_SensorThread)
-sensorThread.start()
+#sensorThreadFlag = 1
+#sensorThread = Thread(target=_SensorThread)
+#sensorThread.start()
 sleep(1)
 
 # --------------- Takeoff Sequence---------------------------------------------
@@ -101,33 +124,31 @@ if armDrone:
 	tTakeoff = time()
 	try:
 		while time()<(tTakeoff + .15):
-			canary.setThrottle(THOVER*.6)
+			canary.setThrottle(TMID*.6)
 		while time()<(tTakeoff + .25):
-			canary.setThrottle(THOVER*.7)
+			canary.setThrottle(TMID*.7)
 		while time()<(tTakeoff + .35):
-			canary.setThrottle(THOVER*.8)
+			canary.setThrottle(TMID*.8)
 		while time()<(tTakeoff + .45):
-			canary.setThrottle(THOVER*.9)
+			canary.setThrottle(TMID*.9)
 		while time()<(tTakeoff + 1.5):
-			canary.setThrottle(THOVER)
+			canary.setThrottle(TMID)
 	except KeyboardInterrupt:
 		canary.disarm()
 		exit()
 
 # --------------- Init Controller ---------------------------------------------
-throttle = THOVER
+throttle = TMID
 dt = 1
 dErr = 0
 iErr = 0
 heightPrev = height
 flightThreadEnable = 1
-IMAX = 25
-IMIN = -25
 # --------------- Test Start --------------------------------------------------
 tstart = time()
 
 if logOn:
-	fname = 'logs/hcontroller/'
+	fname = 'logs/tofhcontroller/'
 	if armDrone == 0:
 		fname = fname+'x'
 	fname = fname+strftime("%Y.%m.%d.%H%M%S")+'.S'+str(setpoint)
@@ -145,7 +166,7 @@ while time()<(tstart+testDur):
 		iErr = min(max(iErr,IMIN),IMAX)
 		dErr = (height-heightPrev)/dt
 		heightPrev = height
-		Tpid = Kp*error+Ki*iErr-Kd*dErr + throttle
+		Tpid = Kp*error+Ki*iErr-Kd*dErr + TMID
 		# Limit Throttle Values
 		throttle = int(min(max(Tpid,TMIN),TMAX))
 		
@@ -163,8 +184,7 @@ while time()<(tstart+testDur):
 		
 		heightUpdated = 0
 		while not heightUpdated:
-			pass # Wait for next sensor read
-		
+			pass
 	except KeyboardInterrupt:
 		if armDrone:
 			print "\nCanary Disarm"
@@ -183,14 +203,16 @@ if armDrone:
 	print "\nCanary Landing..."
 	tTakeoff = time()
 	while time()<(tTakeoff + 2):
-		canary.setThrottle(1550)
-	while time()<(tTakeoff + 3):
-		canary.setThrottle(1525)
+		canary.setThrottle(1580)
+	while time()<(tTakeoff + 2.5):
+		canary.setThrottle(1575)
 	print "\nCanary Disarm"
 	canary.disarm()
 	flightThreadFlag = 0
 sensorThreadFlag = 0
 f.close()
+tof.stop_ranging()
+GPIO.output(sensor1_shutdown, GPIO.LOW)
 GPIO.cleanup()
 if logOn:
 	f.close()
