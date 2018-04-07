@@ -8,11 +8,9 @@ logOn = 1		# enable data logging
 setpoint = 55	# [cm]
 testDur = 25	# Length of test [s]
 # Limits
-TMAX = 1760		# Max throttle value
-TMIN = 1600		# Min throttle value
-TMID = 1670		# Initial Throttle
+TMAX = 1600		# Max throttle value
+TMIN = 1500		# Min throttle value
 SMA_LENGTH = 3	# Length of Simple Moving Average
-IERR_LIM = 70	# Max +/- integral error for windup reset
 # Time of Flight Mode 0-good,1-better,2-Best,3-Long,4-High
 TOF_MODE = 4
 MAX_DIST_IN = 200 # 
@@ -61,22 +59,16 @@ timing = tof.get_timing()
 if (timing < 20000):
     timing = 20000
 dt = timing/1000000.00
+throttleStep = (TMAX-TMIN)/(testDur/dt)
 #End ToF sensor initialization--------------------------------------------------
 
 # ------- User Input ----------------------------------------------------------
 armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 
-# Controller Gains
-Kp = input("Kp Gain : ")		# Proportional gain
-Ki = input("Ki Gain : ")		# Integral gain
-Kd = input("Kd Gain : ")		# Derivative gain
-
 # Display Test Parameters
 print "---- Test Plan ----"
 print "Polling Rate: ", 1/dt,"Hz"
-print "Set point: ",setpoint
 print "Throttle Range of ",TMIN,"-",TMAX," for ",testDur,"s"
-print "P: ",Kp," I: ",Ki," Kd: ",Kd
 
 # Confirm Drone Arming
 if armDrone:
@@ -90,68 +82,47 @@ if armDrone:
 	sleep(2)
 	# Take off Sequence
 	try:
-		canary.setThrottle(TMID*.6)
+		canary.setThrottle(TMIN*.8)
 		sleep(.15)
-		canary.setThrottle(TMID*.7)
+		canary.setThrottle(TMIN*.9)
 		sleep(.15)
-		canary.setThrottle(TMID*.8)
+		canary.setThrottle(TMIN)
 		sleep(.15)
-		canary.setThrottle(TMID*.9)
-		sleep(.15)
-		canary.setThrottle(TMID)
-		sleep(1)
 	except KeyboardInterrupt:
 		canary.disarm()
 		exit()
 
 # --------------- Init Controller ---------------------------------------------
-throttle = TMID
-dErr = 0
-iErr = 0
 height = 0
-heightPrev = height
 distArray = [0]*SMA_LENGTH
-IMAX = IERR_LIM
-IMIN = -IERR_LIM
 # --------------- Test Start --------------------------------------------------
 tstart = time()
 
 if logOn:
-	fname = 'logs/tofhcontroller/'
+	fname = 'logs/modelingTests/'
 	if armDrone == 0:
 		fname = fname+'x'
-	fname = fname+strftime("%Y.%m.%d.%H%M%S")+'.S'+str(setpoint)
-	fname = fname+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'
-	fname = fname+'PID'+str(Kp)+'-'+str(Ki)+'-'+str(Kd)+'.csv'
+	fname = fname+strftime("%Y.%m.%d.%H%M%S.")
+	fname = fname+'Tl'+str(TMIN)+'Th'+str(TMAX)+'.csv'
 	f = open(fname,'a')
 
 
 while time()<(tstart+testDur):
 	try:
-		# Controller
-		error = (setpoint-height)
-		iErr = iErr + error*dt
-		# Anti-windup reset
-		iErr = min(max(iErr,IMIN),IMAX)
-		dErr = (height-heightPrev)/dt
-		heightPrev = height
-		Tpid = Kp*error+Ki*iErr-Kd*dErr + TMID
-		# Limit Throttle Values
-		throttle = int(min(max(Tpid,TMIN),TMAX))
 		
 		# Logging - CSV File:
-		# Time, height, throttle, error, controller out, <CR>
+		# Time, height, throttle, <CR>
 		if logOn:
 			data = str(time())+','+str(height)+','+str(throttle)+','
-			data = data + str(error)+','+str(Tpid)+','
 			data = data+'\n'
 			f.write(data)
 		# Status Output
-		print "Height: ",height,"cm","   Error: ",error
-		print "Set Throttle: ",throttle,"    Controller Output: ",Tpid
-		print "Height: {0:3d} Perr: {1:3d} Ierr: {2:4d}  Derr: {3:4d}".format(height,error,int(iErr),int(dErr))
+		print "Height: ",height,"cm, Set Throttle: ",throttle
 		
 		# Update Throttle
+		# Limit Throttle Values
+		throttle = int(throttle+throttleStep)
+		throttle = int(min(max(Tpid,TMIN),TMAX))
 		try:
 			canary.setThrottle(throttle)
 		except:
