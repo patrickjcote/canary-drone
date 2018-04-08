@@ -7,9 +7,9 @@
 logOn = 1		# enable data logging
 SENSOR_TYPE = 0		# Distance sensor, 0 = ultrasonic, 1 = tof
 setpoint = 55	# [cm]
-testDur = 5	# Length of test [s]
+testDur = 10	# Length of test [s]
 # Limits
-TMAX = 1500		# Max throttle value
+TMAX = 1450		# Max throttle value
 TMIN = 1400		# Min throttle value
 SMA_LENGTH = 3	# Length of Simple Moving Average
 # Time of Flight Mode 0-good,1-better,2-Best,3-Long,4-High
