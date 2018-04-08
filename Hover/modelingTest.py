@@ -104,6 +104,7 @@ if armDrone:
 		canary.disarm()
 		exit()
 throttle = TMIN
+tFloat = TMIN
 # --------------- Init Controller ---------------------------------------------
 height = 0
 distArray = [0]*SMA_LENGTH
@@ -131,8 +132,8 @@ while time()<(tstart+testDur):
 		
 		# Update Throttle
 		# Limit Throttle Values
-		throttle = int(throttle+throttleStep)
-		throttle = int(min(max(throttle,TMIN),TMAX))
+		tFloat = tFloat+throttleStep
+		throttle = int(min(max(tFloat,TMIN),TMAX))
 		# Status Output
 		print "Height: ",height,"cm, Set Throttle: ",throttle
 		try:
@@ -174,12 +175,6 @@ while time()<(tstart+testDur):
 
 if armDrone:
 	# TODO: Proper landing sequence
-	print "\nCanary Landing..."
-	tTakeoff = time()
-	while time()<(tTakeoff + 2):
-		canary.setThrottle(1580)
-	while time()<(tTakeoff + 2.5):
-		canary.setThrottle(1575)
 	print "\nCanary Disarm"
 	canary.disarm()
 f.close()
