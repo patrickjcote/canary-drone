@@ -5,11 +5,12 @@
 
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
+SENSOR_TYPE = 0		# Distance sensor, 0 = ultrasonic, 1 = tof
 setpoint = 55	# [cm]
-testDur = 25	# Length of test [s]
+testDur = 5	# Length of test [s]
 # Limits
-TMAX = 1600		# Max throttle value
-TMIN = 1500		# Min throttle value
+TMAX = 1500		# Max throttle value
+TMIN = 1400		# Min throttle value
 SMA_LENGTH = 3	# Length of Simple Moving Average
 # Time of Flight Mode 0-good,1-better,2-Best,3-Long,4-High
 TOF_MODE = 4
@@ -19,15 +20,18 @@ MAX_DIST_IN = 200 #
 
 # Libraries
 import RPi.GPIO as GPIO
-import VL53L0X
 from time import sleep, strftime, time
-from SensorComm import SensorComm
 from CanaryComm import CanaryComm
 from threading import Thread
+if SENSOR_TYPE:
+	import VL53L0X
+else:
+	from SensorComm import SensorComm
 #import serial
 
 # Init Classes
 canary = CanaryComm(0x08)
+sensors = SensorComm(0x52)
 
 #Initialize ToF sensor---------------------------------------------------------
 # GPIO for Sensor 1 shutdown pin
@@ -46,29 +50,37 @@ sleep(0.50)
 
 # Create one object per VL53L0X passing the address to give to
 # each.
-tof = VL53L0X.VL53L0X(address=0x2B)
+if SENSOR_TYPE:
+	tof = VL53L0X.VL53L0X(address=0x2B)
 
 # Set shutdown pin high for the first VL53L0X then
 # call to start ranging
 GPIO.output(sensor1_shutdown, GPIO.HIGH)
 sleep(0.50)
-tof.start_ranging(TOF_MODE)
+if SENSOR_TYPE:
+	tof.start_ranging(TOF_MODE)
 
 sleep(0.50)
-timing = tof.get_timing()
-if (timing < 20000):
-    timing = 20000
-dt = timing/1000000.00
+if SENSOR_TYPE:
+	timing = tof.get_timing()
+	if (timing < 20000):
+		timing = 20000
+	dt = timing/1000000.00
+else:
+	dt = .06
 throttleStep = (TMAX-TMIN)/(testDur/dt)
 #End ToF sensor initialization--------------------------------------------------
 
 # ------- User Input ----------------------------------------------------------
 armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 
+inAr = sensors.readAll()
+print inAr
 # Display Test Parameters
 print "---- Test Plan ----"
 print "Polling Rate: ", 1/dt,"Hz"
 print "Throttle Range of ",TMIN,"-",TMAX," for ",testDur,"s"
+print "Throttle Step of ",throttleStep
 
 # Confirm Drone Arming
 if armDrone:
@@ -91,7 +103,7 @@ if armDrone:
 	except KeyboardInterrupt:
 		canary.disarm()
 		exit()
-
+throttle = TMIN
 # --------------- Init Controller ---------------------------------------------
 height = 0
 distArray = [0]*SMA_LENGTH
@@ -116,13 +128,13 @@ while time()<(tstart+testDur):
 			data = str(time())+','+str(height)+','+str(throttle)+','
 			data = data+'\n'
 			f.write(data)
-		# Status Output
-		print "Height: ",height,"cm, Set Throttle: ",throttle
 		
 		# Update Throttle
 		# Limit Throttle Values
 		throttle = int(throttle+throttleStep)
-		throttle = int(min(max(Tpid,TMIN),TMAX))
+		throttle = int(min(max(throttle,TMIN),TMAX))
+		# Status Output
+		print "Height: ",height,"cm, Set Throttle: ",throttle
 		try:
 			canary.setThrottle(throttle)
 		except:
@@ -130,15 +142,21 @@ while time()<(tstart+testDur):
 		# Update Distance
 		try:
 			# Read time of flight and convert to cm
-			distIn = (tof.get_distance())/10
+			if SENSOR_TYPE:
+				distIn = (tof.get_distance())/10
+			else:
+				inArray = sensors.readSingle('5')
+				print inArray
+				distIn = inArray
 			print distIn
 			# Check if in valid range then load into moving average
-			if(distIn > 0 and distIn < MAX_DIST_IN):
+			if(distIn > -1 and distIn < MAX_DIST_IN):
 				distArray.append(distIn)
 				del distArray[0]
 			height = sum(distArray)/SMA_LENGTH
 		except:
 			print "Dist error"
+			raise
 		sleep(dt)
 	except KeyboardInterrupt:
 		if armDrone:
@@ -146,9 +164,10 @@ while time()<(tstart+testDur):
 			canary.disarm()
 		if logOn:
 			f.close()
-		tof.stop_ranging()
-		GPIO.output(sensor1_shutdown, GPIO.LOW)
-		GPIO.cleanup()
+		if SENSOR_TYPE:
+			tof.stop_ranging()
+			GPIO.output(sensor1_shutdown, GPIO.LOW)
+			GPIO.cleanup()
 		print "\nKeyboard Exit"
 		exit()
 # --------------- Test Complete   ---------------------------------------------
@@ -164,9 +183,10 @@ if armDrone:
 	print "\nCanary Disarm"
 	canary.disarm()
 f.close()
-tof.stop_ranging()
-GPIO.output(sensor1_shutdown, GPIO.LOW)
-GPIO.cleanup()
+if SENSOR_TYPE:
+	tof.stop_ranging()
+	GPIO.output(sensor1_shutdown, GPIO.LOW)
+	GPIO.cleanup()
 if logOn:
 	f.close()
 print "\nTest Completed"
