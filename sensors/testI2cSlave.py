@@ -18,7 +18,7 @@ class SonicComm:
 	def read(self):
 		self.readArray =  self.bus.read_i2c_block_data(self.address, 3)
 		a = self.readArray
-		print 'Left: {1:3d}    Rear: {3:3d}    Right: {4:3d}    Front: {5:3d}'.format(a[0], a[1], a[2],a[3], a[4], a[5])
+		print '{0:3d} {1:3d} {2:3d} {3:3d} {4:3d} {5:3d}'.format(a[0], a[1], a[2],a[3], a[4], a[5])
 
 
 
