@@ -92,7 +92,7 @@ if armDrone:
 	sleep(2)
 	# Take off Sequence
 	try:
-		while(height<setPoint):
+		while(height<setpoint):
 			try:
 				# Read time of flight and convert to cm
 				distIn = (tof.get_distance())/10
@@ -108,7 +108,9 @@ if armDrone:
 			try:
 				canary.setThrottle(throttle)
 			except:
+				raise
 				print "Throttle set error"
+			sleep(.5)
 		canary.setThrottle(TMID)
 	except KeyboardInterrupt:
 		canary.disarm()
@@ -163,6 +165,7 @@ while time()<(tstart+testDur):
 		try:
 			canary.setThrottle(throttle)
 		except:
+			raise
 			print "Throttle set error"
 		# Update Distance
 		try:

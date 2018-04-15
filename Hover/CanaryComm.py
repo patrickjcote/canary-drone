@@ -51,4 +51,11 @@ class CanaryComm:
 			# Split Channel Value into 2 Bytes
 			command.append(ch & 0xFF)
 			command.append((ch & 0xFF00)>>8)
-		self.bus.write_i2c_block_data(self.address, 0x00, command)
+		i = 0
+		while i<5:
+			try:
+				self.bus.write_i2c_block_data(self.address, 0x00, command)
+				i=5
+			except:
+				print "Write Error. Try: ",str(i)
+				i += 1
