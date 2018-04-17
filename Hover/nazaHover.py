@@ -6,17 +6,16 @@
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
 setpoint = 75	# [cm]
-testDur = 25	# Length of test [s]
+testDur = 5	# Length of test [s]
 # Limits
-TMAX = 1600		# Max throttle value
+TMAX = 1550		# Max throttle value
 TMIN = 1400		# Min throttle value
 TMID = 1500		# Initial Throttle
 SMA_LENGTH = 3	# Length of Simple Moving Average
-DB = 10			# Setpoint deadband [cm]
 IERR_LIM = 70	# Max +/- integral error for windup reset
 # Time of Flight Mode 0-good,1-better,2-Best,3-Long,4-High Speed
-TOF_MODE = 4
-MAX_DIST_IN = 200 # 
+TOF_MODE = 3
+MAX_DIST_IN = 300 # 
 
 # -----------------------------------------------------------------------------
 
@@ -29,67 +28,36 @@ from CanaryComm import CanaryComm
 from threading import Thread
 #import serial
 
-# Functions
-# Check distance is in a valid range
-def inRange(dist):
-	if(dist >= 2 and dist <= 200):
-		return True
-	else:
-		return False
-
 # Init Classes
 canary = CanaryComm(0x08)
 
-#-------------ToF Sensor Initialization-----------------------------------
+#Initialize ToF sensor---------------------------------------------------------
 # GPIO for Sensor 1 shutdown pin
-sensor1_shutdown = 20
-# GPIO for Sensor 2 shutdown pin
-sensor2_shutdown = 16
-# GPIO for Sensor 3 shutdown pin
-sensor3_shutdown = 8
-
+sensor1_shutdown = 7
 GPIO.setwarnings(False)
 
 # Setup GPIO for shutdown pins on each VL53L0X
+GPIO.setmode(GPIO.BOARD)
 GPIO.setup(sensor1_shutdown, GPIO.OUT)
-GPIO.setup(sensor2_shutdown, GPIO.OUT)
-GPIO.setup(sensor3_shutdown, GPIO.OUT)
 
 # Set all shutdown pins low to turn off each VL53L0X
 GPIO.output(sensor1_shutdown, GPIO.LOW)
-GPIO.output(sensor2_shutdown, GPIO.LOW)
-GPIO.output(sensor3_shutdown, GPIO.LOW)
 
 # Keep all low for 500 ms or so to make sure they reset
 sleep(0.50)
 
 # Create one object per VL53L0X passing the address to give to
 # each.
-tofBottom = VL53L0X.VL53L0X(address=0x2B)
-tofFront = VL53L0X.VL53L0X(address=0x2D)
-tofRight = VL53L0X.VL53L0X(address=0x2E)
+tof = VL53L0X.VL53L0X(address=0x2B)
 
-# Set shutdown pin high for the first VL53L0X then 
-# call to start ranging 
+# Set shutdown pin high for the first VL53L0X then
+# call to start ranging
 GPIO.output(sensor1_shutdown, GPIO.HIGH)
 sleep(0.50)
-tofBottom.start_ranging(VL53L0X.VL53L0X_BETTER_ACCURACY_MODE)
-
-# Set shutdown pin high for the second VL53L0X then 
-# call to start ranging 
-GPIO.output(sensor2_shutdown, GPIO.HIGH)
-sleep(0.50)
-tofFront.start_ranging(VL53L0X.VL53L0X_BETTER_ACCURACY_MODE)
-
-# Set shutdown pin high for the third VL53L0X then 
-# call to start ranging 
-GPIO.output(sensor3_shutdown, GPIO.HIGH)
-sleep(0.50)
-tofRight.start_ranging(VL53L0X.VL53L0X_BETTER_ACCURACY_MODE)
-#--------------------------------------------------------------
+tof.start_ranging(TOF_MODE)
 
 sleep(0.50)
-timing = tofBottom.get_timing()
+timing = tof.get_timing()
 if (timing < 20000):
     timing = 20000
 dt = timing/1000000.00
@@ -99,10 +67,11 @@ dt = timing/1000000.00
 armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 
 # Controller Gains
+Ki = 0
+Kd = 0
 Kp = input("Kp Gain : ")		# Proportional gain
-Ki = input("Ki Gain : ")		# Integral gain
-Kd = input("Kd Gain : ")		# Derivative gain
-
+#Ki = input("Ki Gain : ")		# Integral gain
+#Kd = input("Kd Gain : ")		# Derivative gain
 # Display Test Parameters
 print "---- Test Plan ----"
 print "Polling Rate: ", 1/dt,"Hz"
@@ -123,17 +92,11 @@ if armDrone:
 	canary.arm()
 	sleep(2)
 	# Take off Sequence
-	for i in range(0,5):
-		throttle = 1000+i*120
-		try:
-			canary.setThrottle(throttle)
-		except:
-			print "Throttle set error"
 	try:
-		while(height<setPoint):
+		while(height<setpoint):
 			try:
 				# Read time of flight and convert to cm
-				distIn = (tofBottom.get_distance())/10
+				distIn = (tof.get_distance())/10
 				print distIn
 				# Check if in valid range then load into moving average
 				if(distIn > 0 and distIn < MAX_DIST_IN):
@@ -142,11 +105,13 @@ if armDrone:
 				height = sum(distArray)/SMA_LENGTH
 			except:
 				print "Dist error"
-			throttle = 1600
+			throttle = 1510
 			try:
 				canary.setThrottle(throttle)
 			except:
+				raise
 				print "Throttle set error"
+			sleep(.5)
 		canary.setThrottle(TMID)
 	except KeyboardInterrupt:
 		canary.disarm()
@@ -174,13 +139,8 @@ if logOn:
 
 while time()<(tstart+testDur):
 	try:
-		# ---------------- Hover Controller ------------------
-		if(height<(setpoint+DB) and height>(setpoint-DB)):
-			heightDB = setpoint
-		else:
-			heightDB = height
-
-		error = (setpoint-heightDB)
+		# Controller
+		error = (setpoint-height)
 		iErr = iErr + error*dt
 		# Anti-windup reset
 		iErr = min(max(iErr,IMIN),IMAX)
@@ -190,29 +150,8 @@ while time()<(tstart+testDur):
 		# Limit Throttle Values
 		throttle = int(min(max(Tpid,TMIN),TMAX))
 		
-		# Update Throttle
-		try:
-			canary.setThrottle(throttle)
-		except:
-			print "Throttle set error"
-		# Update Height
-		try:
-			# Read time of flight and convert to cm
-			distIn = (tofBottom.get_distance())/10
-			print distIn
-			# Check if in valid range then load into moving average
-			if(distIn > 0 and distIn < MAX_DIST_IN):
-				distArray.append(distIn)
-				del distArray[0]
-			height = sum(distArray)/SMA_LENGTH
-		except:
-			print "Height read error"
-			
-		
-			
-			
-		# ---------------- Logging ----------------------------------------
-		# CSV File: # Time, height, throttle, error, controller out, <CR>
+		# Logging - CSV File:
+		# Time, height, throttle, error, controller out, <CR>
 		if logOn:
 			data = str(time())+','+str(height)+','+str(throttle)+','
 			data = data + str(error)+','+str(Tpid)+','
@@ -222,6 +161,25 @@ while time()<(tstart+testDur):
 		print "Height: ",height,"cm","   Error: ",error
 		print "Set Throttle: ",throttle,"    Controller Output: ",Tpid
 		print "Height: {0:3d} Perr: {1:3d} Ierr: {2:4d}  Derr: {3:4d}".format(height,error,int(iErr),int(dErr))
+		
+		# Update Throttle
+		try:
+			canary.setThrottle(throttle)
+		except:
+			raise
+			print "Throttle set error"
+		# Update Distance
+		try:
+			# Read time of flight and convert to cm
+			distIn = (tof.get_distance())/10
+			print distIn
+			# Check if in valid range then load into moving average
+			if(distIn > 0 and distIn < MAX_DIST_IN):
+				distArray.append(distIn)
+				del distArray[0]
+			height = sum(distArray)/SMA_LENGTH
+		except:
+			print "Dist error"
 		sleep(dt)
 	except KeyboardInterrupt:
 		if armDrone:
@@ -229,7 +187,7 @@ while time()<(tstart+testDur):
 			canary.disarm()
 		if logOn:
 			f.close()
-		tofBottom.stop_ranging()
+		tof.stop_ranging()
 		GPIO.output(sensor1_shutdown, GPIO.LOW)
 		GPIO.cleanup()
 		print "\nKeyboard Exit"
@@ -241,13 +199,13 @@ if armDrone:
 	print "\nCanary Landing..."
 	tTakeoff = time()
 	while time()<(tTakeoff + 2):
-		canary.setThrottle(1580)
+		canary.setThrottle(1450)
 	while time()<(tTakeoff + 2.5):
-		canary.setThrottle(1575)
+		canary.setThrottle(1400)
 	print "\nCanary Disarm"
 	canary.disarm()
 f.close()
-tofBottom.stop_ranging()
+tof.stop_ranging()
 GPIO.output(sensor1_shutdown, GPIO.LOW)
 GPIO.cleanup()
 if logOn:
