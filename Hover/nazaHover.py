@@ -6,10 +6,10 @@
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
 setpoint = 75	# [cm]
-testDur = 5	# Length of test [s]
+testDur = 15	# Length of test [s]
 # Limits
-TMAX = 1600		# Max throttle value
-TMIN = 1400		# Min throttle value
+TMAX = 1575		# Max throttle value
+TMIN = 1425		# Min throttle value
 TMID = 1500		# Initial Throttle
 SMA_LENGTH = 3	# Length of Simple Moving Average
 IERR_LIM = 70	# Max +/- integral error for windup reset
@@ -200,7 +200,7 @@ if armDrone:
 	tTakeoff = time()
 	while time()<(tTakeoff + 2):
 		canary.setThrottle(1450)
-	while time()<(tTakeoff + 2.5):
+	while time()<(tTakeoff + 3.5):
 		canary.setThrottle(1400)
 	print "\nCanary Disarm"
 	canary.disarm()
