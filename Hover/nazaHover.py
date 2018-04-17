@@ -8,7 +8,7 @@ logOn = 1		# enable data logging
 setpoint = 75	# [cm]
 testDur = 5	# Length of test [s]
 # Limits
-TMAX = 1550		# Max throttle value
+TMAX = 1600		# Max throttle value
 TMIN = 1400		# Min throttle value
 TMID = 1500		# Initial Throttle
 SMA_LENGTH = 3	# Length of Simple Moving Average
@@ -105,7 +105,7 @@ if armDrone:
 				height = sum(distArray)/SMA_LENGTH
 			except:
 				print "Dist error"
-			throttle = 1510
+			throttle = TMAX
 			try:
 				canary.setThrottle(throttle)
 			except:
