@@ -5,8 +5,10 @@
 
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
-setpoint = 75	# [cm]
-testDur = 15	# Length of test [s]
+setpoint = 85	# [cm]
+SETPOINT2 = 85	# [cm]   step change in set point halfway through the test
+TAKEOFF_PITCH = 1520	# Pitch value to combat ugly takeoff
+testDur = 25	# Length of test [s]
 # Limits
 TMAX = 1575		# Max throttle value
 TMIN = 1425		# Min throttle value
@@ -77,7 +79,7 @@ armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 Ki = 0
 Kd = 0
 Kp = input("Kp Gain : ")		# Proportional gain
-#Ki = input("Ki Gain : ")		# Integral gain
+Ki = input("Ki Gain : ")		# Integral gain
 #Kd = input("Kd Gain : ")		# Derivative gain
 # Display Test Parameters
 print "---- Test Plan ----"
@@ -115,7 +117,7 @@ if armDrone:
 	sleep(2)
 	# Take off Sequence
 	try:
-		while(height<setpoint):
+		while(height<setpoint*0.75):
 			try:
 				# Read time of flight and convert to cm
 				distIn = (tof.get_distance())/10
@@ -130,11 +132,13 @@ if armDrone:
 			throttle = TMAX
 			try:
 				canary.setThrottle(throttle)
+				canary.setPitch(TAKEOFF_PITCH)
 			except:
 				raise
 				print "Throttle set error"
 			sleep(.5)
 		canary.setThrottle(TMID)
+		canary.setPitch(1500)
 	except KeyboardInterrupt:
 		canary.disarm()
 		exit()
@@ -161,6 +165,8 @@ if logOn:
 
 while time()<(tstart+testDur):
 	try:
+		if time()>(tstart+testDur/2):
+			setpoint = SETPOINT2
 		# Controller
 		error = (setpoint-height)
 		iErr = iErr + error*dt
@@ -176,7 +182,7 @@ while time()<(tstart+testDur):
 		# Time, height, throttle, error, controller out, <CR>
 		if logOn:
 			data = str(time())+','+str(height)+','+str(throttle)+','
-			data = data + str(error)+','+str(Tpid)+','
+			data = data + str(error)+','+str(Tpid)+','+str(setpoint)+','
 			data = data+'\n'
 			f.write(data)
 		# Status Output
