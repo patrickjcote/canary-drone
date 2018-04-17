@@ -15,8 +15,10 @@ SMA_LENGTH = 3	# Length of Simple Moving Average
 DB = 10			# Setpoint deadband [cm]
 IERR_LIM = 70	# Max +/- integral error for windup reset
 # Time of Flight Mode 0-good,1-better,2-Best,3-Long,4-High Speed
-TOF_MODE = 4
-MAX_DIST_IN = 200 # 
+TOF_MODE_B = 4	# Time of flight mode for bottom sensor
+# Time of Flight Mode 0-good,1-better,2-Best,3-Long,4-High Speed
+TOF_MODE = 3	# Time of flight mode for other sensors
+MAX_DIST_IN = 300 # 
 
 # -----------------------------------------------------------------------------
 
@@ -73,19 +75,19 @@ tofRight = VL53L0X.VL53L0X(address=0x2E)
 # call to start ranging 
 GPIO.output(sensor1_shutdown, GPIO.HIGH)
 sleep(0.50)
-tofBottom.start_ranging(VL53L0X.VL53L0X_BETTER_ACCURACY_MODE)
+tofBottom.start_ranging(TOF_MODE_B)
 
 # Set shutdown pin high for the second VL53L0X then 
 # call to start ranging 
 GPIO.output(sensor2_shutdown, GPIO.HIGH)
 sleep(0.50)
-tofFront.start_ranging(VL53L0X.VL53L0X_BETTER_ACCURACY_MODE)
+tofFront.start_ranging(TOF_MODE)
 
 # Set shutdown pin high for the third VL53L0X then 
 # call to start ranging 
 GPIO.output(sensor3_shutdown, GPIO.HIGH)
 sleep(0.50)
-tofRight.start_ranging(VL53L0X.VL53L0X_BETTER_ACCURACY_MODE)
+tofRight.start_ranging(TOF_MODE)
 #--------------------------------------------------------------
 
 sleep(0.50)
