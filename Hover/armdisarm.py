@@ -10,5 +10,5 @@ from CanaryComm import CanaryComm
 canary = CanaryComm(0x08)
 sleep(1)
 canary.arm()
-sleep(.5)
+sleep(.2)
 canary.disarm()
