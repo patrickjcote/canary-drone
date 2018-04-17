@@ -31,7 +31,7 @@ class CanaryComm:
 
 	# Arm and Disarm States
 	def arm(self):
-		self.channel = [1000,1506,1490,1500,1750]
+		self.channel = [1000,1500,1500,1500,1750]
 		self.updateState()
 
 	def disarm(self):
