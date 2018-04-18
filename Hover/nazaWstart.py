@@ -5,10 +5,10 @@
 
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
-setpoint = 85	# [cm]
-SETPOINT2 = 85	# [cm]   step change in set point halfway through the test
+setpoint = 55	# [cm]
+SETPOINT2 = 55	# [cm]   step change in set point halfway through the test
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
-testDur = 5	# Length of test [s]
+testDur = 15	# Length of test [s]
 # Limits
 TMAX = 1575		# Max throttle value
 TMIN = 1425		# Min throttle value
@@ -88,10 +88,11 @@ dt = timing/1000000.00
 armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 
 # Controller Gains
+Kp = 1
 Ki = 0
 Kd = 0
-Kp = input("Kp Gain : ")		# Proportional gain
-Ki = input("Ki Gain : ")		# Integral gain
+#Kp = input("Kp Gain : ")		# Proportional gain
+#Ki = input("Ki Gain : ")		# Integral gain
 #Kd = input("Kd Gain : ")		# Derivative gain
 # Display Test Parameters
 print "---- Test Plan ----"
@@ -106,6 +107,7 @@ if armDrone:
 	# Init Classes
 	canary = CanaryComm(0x08)
 
+print "Press the 'GO Button' on the drone..."
 # Wait for button to init test, Flash LED to signal ready
 while not GPIO.input(BUTTON_PIN):
 	GPIO.output(STATUS_LED, GPIO.HIGH)
@@ -192,18 +194,6 @@ while time()<(tstart+testDur):
 		# Limit Throttle Values
 		throttle = int(min(max(Tpid,TMIN),TMAX))
 		
-		# Logging - CSV File:
-		# Time, height, throttle, error, controller out, <CR>
-		if logOn:
-			data = str(time())+','+str(height)+','+str(throttle)+','
-			data = data + str(error)+','+str(Tpid)+','+str(setpoint)+','
-			data = data+'\n'
-			f.write(data)
-		# Status Output
-		print "Height: ",height,"cm","   Error: ",error
-		print "Set Throttle: ",throttle,"    Controller Output: ",Tpid
-		print "Height: {0:3d} Perr: {1:3d} Ierr: {2:4d}  Derr: {3:4d}".format(height,error,int(iErr),int(dErr))
-		
 		# Update Throttle
 		if armDrone:
 			try:
@@ -223,12 +213,27 @@ while time()<(tstart+testDur):
 			height = sum(distArray)/SMA_LENGTH
 		except:
 			print "Dist error"
+
+		# --------  Logging - CSV File: -----------------------------
+		# Time, height, throttle, error, controller out, <CR>
+		if logOn:
+			data = str(time())+','+str(height)+','+str(throttle)+','
+			data = data + str(error)+','+str(Tpid)+','+str(setpoint)+','
+			data = data+'\n'
+			f.write(data)
+		# Status Output
+		print "Height: ",height,"cm","   Error: ",error
+		print "Set Throttle: ",throttle,"    Controller Output: ",Tpid
+		print "Height: {0:3d} Perr: {1:3d} Ierr: {2:4d}  Derr: {3:4d}".format(height,error,int(iErr),int(dErr))
+		
 		sleep(dt)
 	except KeyboardInterrupt:
 		if armDrone:
 			print "\nCanary Disarm"
 			canary.disarm()
 		if logOn:
+			data = 'Keyboard Exit\n'
+			f.write(data)
 			f.close()
 		tofBottom.stop_ranging()
 		GPIO.output(sensor1_shutdown, GPIO.LOW)
