@@ -5,17 +5,17 @@
 
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
-setpoint = 85	# [cm]
-SETPOINT2 = 85	# [cm]   step change in set point halfway through the test
+setpoint = 75	# [cm]
+SETPOINT2 = 75	# [cm]   step change in set point halfway through the test
 TAKEOFF_PITCH = 1520	# Pitch value to combat ugly takeoff
-testDur = 25	# Length of test [s]
+testDur = 20	# Length of test [s]
 # Flight Control Limits
 TMAX = 1575		# Max throttle value
 TMIN = 1425		# Min throttle value
 TMID = 1500		# Initial Throttle
 PMIN = 1450		# Min Pitch Value
 PMAX = 1550		# Max Pitch Value
-PSTEP = 15		# Increment Pitch with distance array multiplier
+PSTEP = 5		# Increment Pitch with distance array multiplier
 # Distance Array [Max, Mid, Min, Kill]
 SENSE_DIST = [150, 75, 50, 25]
 SMA_LENGTH = 3	# Length of Simple Moving Average for altitude ToF
@@ -135,7 +135,7 @@ GPIO.output(STATUS_LED, GPIO.LOW)
 # --------------- Takeoff Sequence---------------------------------------------
 height = 0
 distArray = [0]*SMA_LENGTH
-fwdDistArray = [0]*SMA2
+fwdDistArray = [MAX_DIST_IN]*SMA2
 if armDrone:
 	canary = CanaryComm(0x08)
 	sleep(1)
@@ -240,13 +240,14 @@ while time()<(tstart+testDur) and allClearFlag:
 				pitchSet = 1500 - 3*PSTEP
 			if fwdDist < SENSE_DIST[3]:
 				print "YOU'RE TOO CLOSE, MAN!!!!"
-				allClearFlag = 0
+#				allClearFlag = 0
 		# Limit Pitch Values
 		pitch = int(min(max(pitchSet,PMIN),PMAX))
 		
 		# Update Throttle
 		try:
 			canary.setPitch(pitch)
+			print "Pitch: ",pitch
 		except:
 			raise
 			print "Pitch set error"
