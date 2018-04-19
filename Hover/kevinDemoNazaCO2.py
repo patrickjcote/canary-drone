@@ -292,6 +292,8 @@ while time()<(tstart+testDur) and (not GPIO.input(BUTTON_PIN)):
 		print "\nKeyboard Exit"
 		exit()
 # --------------- Test Complete   ---------------------------------------------
+if GPIO.input(BUTTON_PIN):
+	print "KILL SWITCH ENGAGE!"
 
 if armDrone:
 	# TODO: Proper landing sequence
