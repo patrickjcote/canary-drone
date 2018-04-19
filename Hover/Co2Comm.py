@@ -20,7 +20,6 @@ class CO2Comm:
 		self.CO2Thread.start()
 		sleep(.01)
 
-
 	def _CO2Thread(self):
 		while self.flag:
 			self.line =self.ser.readline()
@@ -31,11 +30,7 @@ class CO2Comm:
 				GPIO.output(self.CO2_PIN, GPIO.HIGH)
 			else:
 				GPIO.output(self.CO2_PIN, GPIO.LOW)
-			if self.printFlag:
-				print self.outStr
-	
+
 	def exit(self):
 		CO2ThreadFlag = 0
 
-print "Initializing CO2 Sensor"
-a = CO2Comm(40,1)

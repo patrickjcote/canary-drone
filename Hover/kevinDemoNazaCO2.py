@@ -9,7 +9,7 @@ FILE_DIR = 'logs/nazaHover/'	# Log file directory
 setpoint = 55	# [cm]
 SETPOINT2 = 55	# [cm]   step change in set point halfway through the test
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
-testDur = 25	# Length of test [s]
+testDur = 5	# Length of test [s]
 #  Flight Value Limits
 TMAX = 1575		# Max throttle value
 TMIN = 1425		# Min throttle value
@@ -33,10 +33,14 @@ from threading import Thread
 from Co2Comm import CO2Comm
 
 # Check for input arguments
-if len(sys.arg)>0:
-	userInputFlag = sys.arg[0]
-else:
-	userInputFlag = 1
+#if len(sys.arg)>0:
+#	userInputFlag = sys.arg[0]
+#else:
+#	userInputFlag = 1
+
+userInputFlag = 1
+
+
 
 if userInputFlag:
 # ------- User Input ----------------------------------------------------------
@@ -51,7 +55,6 @@ if userInputFlag:
 #Kd = input("Kd Gain : ")		# Derivative gain
 # Display Test Parameters
 	print "---- Test Plan ----"
-	print "Polling Rate: ", 1/dt,"Hz"
 	print "Set point: ",setpoint
 	print "Throttle Range of ",TMIN,"-",TMAX," for ",testDur,"s"
 	print "P: ",Kp," I: ",Ki," Kd: ",Kd
@@ -65,8 +68,8 @@ else:
 
 # ----------------------------Initialization ---------------------------------
 # -- Status Light and Start Button --
-STATUS_LED = 40
-BUTTON_PIN = 38
+STATUS_LED = 12
+BUTTON_PIN = 40
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
@@ -75,9 +78,9 @@ GPIO.setup(BUTTON_PIN, GPIO.IN)
 
 # -- ToF Sensor Initialization --
 # GPIO for Sensor 1 shutdown pin
-sensor1_shutdown = 37 #DOWN
+sensor1_shutdown = 31 #DOWN
 # GPIO for Sensor 2 shutdown pin
-sensor2_shutdown = 35 #FWD
+sensor2_shutdown = 32 #FWD
 
 # Setup GPIO for shutdown pins on each VL53L0X
 GPIO.setup(sensor1_shutdown, GPIO.OUT)
@@ -272,7 +275,6 @@ while time()<(tstart+testDur) and (not GPIO.input(BUTTON_PIN)):
 
 	# --------- Status Output -----------------------------------
 		print "Height: {0:3d}cm  Error: {1:3d} Throttle: {2:4d}".format(height,error,throttle)
-		
 		sleep(dt)
 	except KeyboardInterrupt:
 		if armDrone:
@@ -315,6 +317,7 @@ if armDrone:
 	canary.disarm()
 f.close()
 co2.exit()
+sleep(.1)
 tofBottom.stop_ranging()
 tofFront.stop_ranging()
 GPIO.output(sensor1_shutdown, GPIO.LOW)
