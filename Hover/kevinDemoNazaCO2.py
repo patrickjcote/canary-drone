@@ -1,25 +1,29 @@
 # File: kevenDemoNazaCO2.py
-# Version: 0.1 
+# Version: 0.5
 # Author: 2018 - Patrick Cote
 # Description: Hover Demo for Kevin with CO2 sensor
+
+#TODO: Put shutdown sequence into a function
+#TODO: Fix input args check so we can run this on boot
 
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
 FILE_DIR = 'logs/nazaHover/'	# Log file directory
+testDur = 5		# Length of test [s]
 setpoint = 55	# [cm]
-SETPOINT2 = 55	# [cm]   step change in set point halfway through the test
+SETPOINT2 = 55	# [cm] step change @ u[t-testDur/2]
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
-testDur = 5	# Length of test [s]
 #  Flight Value Limits
 TMAX = 1575		# Max throttle value
 TMIN = 1425		# Min throttle value
 TMID = 1500		# Initial Throttle
-IERR_LIM = 70	# Max +/- integral error for windup reset
 # Time of Flight Mode 0-good,1-better,2-Best,3-Long Range,4-High Speed
 TOF_MODE_B = 3	# Ranging mode for downward-facing ToF
 TOF_MODE = 3	# Ranging mode of azimuth ToFs
 MAX_DIST_IN = 300 # Maximum valid distance read by ToFs
 SMA_LENGTH = 3	# Length of Simple Moving Average
+# Controller Values
+KP_ALT = 1		# Proportional Gain for the altitude controller
 
 # -----------------------------------------------------------------------------
 
@@ -40,16 +44,15 @@ from Co2Comm import CO2Comm
 
 userInputFlag = 1
 
-
-
 if userInputFlag:
 # ------- User Input ----------------------------------------------------------
 	armDrone = input("Arm drone [0 - No, 1 - yes]: ")	 # enable drone
 
 # Controller Gains
-	Kp = 1
+	Kp = KP_ALT
 	Ki = 0
 	Kd = 0
+	IERR_LIM = 70	# Max +/- integral error for windup reset
 #Kp = input("Kp Gain : ")		# Proportional gain
 #Ki = input("Ki Gain : ")		# Integral gain
 #Kd = input("Kd Gain : ")		# Derivative gain
@@ -64,6 +67,11 @@ if userInputFlag:
 		armDrone = input("Confirm drone arm [0 - No, 1 - yes]: ")
 # ---- End User Input ---------------------------------------------------------
 else:
+	# Controller Gains
+	Kp = KP_GAIN
+	Ki = 0
+	Kd = 0
+	IERR_LIM = 70	# Max +/- integral error for windup reset
 	armDrone = 1
 
 # ----------------------------Initialization ---------------------------------
@@ -78,9 +86,9 @@ GPIO.setup(BUTTON_PIN, GPIO.IN)
 
 # -- ToF Sensor Initialization --
 # GPIO for Sensor 1 shutdown pin
-sensor1_shutdown = 31 #DOWN
+sensor1_shutdown = 31 # DOWN
 # GPIO for Sensor 2 shutdown pin
-sensor2_shutdown = 32 #FWD
+sensor2_shutdown = 32 # FWD
 
 # Setup GPIO for shutdown pins on each VL53L0X
 GPIO.setup(sensor1_shutdown, GPIO.OUT)
@@ -98,14 +106,14 @@ sleep(0.50)
 tofBottom = VL53L0X.VL53L0X(address=0x2B)
 tofFront = VL53L0X.VL53L0X(address=0x2D)
 
-# Set shutdown pin high for the first VL53L0X then 
-# call to start ranging 
+# Set shutdown pin high for the first VL53L0X then
+# call to start ranging
 GPIO.output(sensor1_shutdown, GPIO.HIGH)
 sleep(0.50)
 tofBottom.start_ranging(TOF_MODE_B)
 
-# Set shutdown pin high for the second VL53L0X then 
-# call to start ranging 
+# Set shutdown pin high for the second VL53L0X then
+# call to start ranging
 GPIO.output(sensor2_shutdown, GPIO.HIGH)
 sleep(0.50)
 tofFront.start_ranging(TOF_MODE)
@@ -135,15 +143,29 @@ if armDrone:
 	try:
 		cypressConnection = canary.disarm()
 		while cypressConnection == 0:
+			print "Cypress not detected."
+			print "Press the 'D' button on the Kill Switch..."
 			cypressConnection = canary.disarm()
 			sleep(0.5)
 	except:
-		print "Cypress not detected."
-		print "Press the enable button on the Kill Switch."
 		pass
 	print "Cypress Detected!"
 
-print "Press the 'GO Button' on the drone..."
+if logOn:
+	try:
+		fname = FILE_DIR
+		if armDrone == 0:
+			fname = fname+'x'
+		fname = fname+strftime("%Y.%m.%d.%H%M%S")+'.S'+str(setpoint)
+		fname = fname+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'
+		fname = fname+'PID'+str(Kp)+'-'+str(Ki)+'-'+str(Kd)+'.csv'
+		f = open(fname,'a')
+	except:
+		print "Log File Error..."
+		raise
+		exit()
+
+print "Press the 'A' button on the Kill Switch to initiate takeoff..."
 # Wait for button to init test, Flash LED to signal ready
 while not GPIO.input(BUTTON_PIN):
 	GPIO.output(STATUS_LED, GPIO.HIGH)
@@ -151,7 +173,7 @@ while not GPIO.input(BUTTON_PIN):
 	GPIO.output(STATUS_LED, GPIO.LOW)
 	sleep(.5)
 # Rapid flash Status LED to signal takeoff has been enabled
-# Turn off the LED for 1 second then blink to indicate takeoff
+# Turn off the LED for 1 second then blink once to indicate takeoff
 for i in range(0,10):
 	GPIO.output(STATUS_LED, GPIO.HIGH)
 	sleep(.1)
@@ -211,18 +233,6 @@ heightPrev = height
 IMAX = IERR_LIM
 IMIN = -IERR_LIM
 # --------------- Test Start --------------------------------------------------
-tstart = time()
-
-if logOn:
-	fname = FILE_DIR
-	if armDrone == 0:
-		fname = fname+'x'
-	fname = fname+strftime("%Y.%m.%d.%H%M%S")+'.S'+str(setpoint)
-	fname = fname+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'
-	fname = fname+'PID'+str(Kp)+'-'+str(Ki)+'-'+str(Kd)+'.csv'
-	f = open(fname,'a')
-
-
 # Main loop:
 # Remain in loop for length of testDur or until "Go Button" is pressed
 # Logic:
@@ -230,6 +240,7 @@ if logOn:
 #	Calculate error and Calculate new throttle value
 #	Log values and display them to the console
 #	Delay for ToF sampling time
+tstart = time()
 while time()<(tstart+testDur) and (not GPIO.input(BUTTON_PIN)):
 	try:
 		if time()>(tstart+testDur/2):
@@ -276,6 +287,7 @@ while time()<(tstart+testDur) and (not GPIO.input(BUTTON_PIN)):
 	# --------- Status Output -----------------------------------
 		print "Height: {0:3d}cm  Error: {1:3d} Throttle: {2:4d}".format(height,error,throttle)
 		sleep(dt)
+
 	except KeyboardInterrupt:
 		if armDrone:
 			print "\nCanary Disarm"
