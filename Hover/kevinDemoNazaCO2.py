@@ -163,8 +163,8 @@ sleep(.1)
 GPIO.output(STATUS_LED, GPIO.LOW)
 sleep(.1)
 
-# Init the CO2 detection
-co2 = CO2Comm(STATUS_LED,1)
+# Init the CO2 detection w/ printing and logging
+co2 = CO2Comm(STATUS_LED,1,1)
 sleep(.1)
 
 # --------------- Takeoff Sequence---------------------------------------------

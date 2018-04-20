@@ -1,19 +1,29 @@
 import RPi.GPIO as GPIO
 import serial
-from time import sleep
+import sys
 from threading import Thread
-  
+from time import sleep, strftime, time
+
+
 class CO2Comm:
 	CO2ThreadFlag = 1
-	def __init__(self, address, printFlag):
+	def __init__(self, address, printFlag, logOn):
 		self.CO2_PIN = address
 		self.printFlag = printFlag
+		self.logOn = logOn
 		self.ser = serial.Serial("/dev/ttyAMA0")
 		GPIO.setmode(GPIO.BOARD)
 		GPIO.setup(self.CO2_PIN, GPIO.OUT)
 		GPIO.output(self.CO2_PIN, GPIO.LOW)
+		# Initialize Cozir CO2 sensor into streaming mode
 		self.ser.write("K 1\r\n")
 		sleep(.05)
+# Logging 
+		if self.logOn:
+			self.fname = 'logs/CO2/'
+			self.fname = self.fname+strftime("%Y.%m.%d.%H%M%S")+'.Co2.vsc'
+			self.f = open(self.fname,'a')
+
 # Sensor read thread Function
 		self.flag = 1
 		self.CO2Thread = Thread(target=self._CO2Thread)
@@ -30,6 +40,11 @@ class CO2Comm:
 				GPIO.output(self.CO2_PIN, GPIO.HIGH)
 			else:
 				GPIO.output(self.CO2_PIN, GPIO.LOW)
+		# --------  Logging - CSV File: -----------------------------
+			# Time, concentration [ppm], <CR>
+			if self.logOn:
+				data = str(time())+','+str(self.conc)+',\n'
+				self.f.write(data)
 
 	def exit(self):
 		CO2ThreadFlag = 0
