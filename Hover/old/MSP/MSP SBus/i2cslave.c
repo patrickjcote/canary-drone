@@ -77,7 +77,6 @@ __interrupt void USCI0RX_ISR(void)
 {
 	volatile char temp;
 	if(IFG2 & UCA0RXIFG){							// Receive data on UART
-		// TODO: UART Check?
 	}
 	if(IFG2 & UCB0TXIFG){							// detect beginning of i2c in slave-master mode
 		i2cmode=1;

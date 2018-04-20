@@ -243,7 +243,7 @@ while time()<(tstart+testDur):
 # --------------- Test Complete   ---------------------------------------------
 
 if armDrone:
-	# TODO: Proper landing sequence
+	# ODO: Proper landing sequence
 	print "\nCanary Landing..."
 	while height>10:
 		try:

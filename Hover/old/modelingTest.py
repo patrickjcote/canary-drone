@@ -174,7 +174,7 @@ while time()<(tstart+testDur):
 # --------------- Test Complete   ---------------------------------------------
 
 if armDrone:
-	# TODO: Proper landing sequence
+	# ODO: Proper landing sequence
 	print "\nCanary Disarm"
 	canary.disarm()
 f.close()

@@ -5,6 +5,9 @@
 
 #TODO: Put shutdown sequence into a function
 #TODO: Fix input args check so we can run this on boot
+#TODO: Fix Cypress i2c check
+#TODO: Optimize delay to improve sample rate
+#TODO: Design FIR to replace SMA
 
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging

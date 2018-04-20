@@ -2,7 +2,7 @@
 # Version: 0.2
 # Author: 2018 - Patrick Cote
 # Description: Hover Controller with forward object detection
-
+#TODO: test
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
 setpoint = 75	# [cm]
@@ -296,7 +296,7 @@ while time()<(tstart+testDur) and allClearFlag:
 # --------------- Test Complete   ---------------------------------------------
 
 if armDrone:
-	# TODO: Proper landing sequence
+	# ODO: Proper landing sequence
 	print "\nCanary Landing..."
 	tTakeoff = time()
 	while time()<(tTakeoff + 2):

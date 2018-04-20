@@ -94,7 +94,6 @@ int main(void) {
 
 
 
-        // Send a frame TODO: Put in Timer Interrupt
         sendFrame();
 
         for(k=0; k < DELAY_MULTIPLIER; k++)

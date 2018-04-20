@@ -62,7 +62,8 @@ int32_t VL53L0X_trace_config(char *filename, uint32_t modules, uint32_t level, u
     {
         _tracefile = fopen(filename, "w+");
 
-        //TODO: Add time and header banner to the log file to indicate we've just opened a new log session
+        //ODO: Add time and header banner to the log file to indicate we've just opened a new log session
+		
 
         if ( _tracefile != NULL )
         {

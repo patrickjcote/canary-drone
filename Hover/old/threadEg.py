@@ -179,7 +179,7 @@ while time()<(tstart+testDur):
 # --------------- Test Complete   ---------------------------------------------
 
 if armDrone:
-	# TODO: Proper landing sequence
+	# ODO: Proper landing sequence
 	print "\nCanary Landing..."
 	tTakeoff = time()
 	while time()<(tTakeoff + 2):
