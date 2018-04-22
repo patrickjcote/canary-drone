@@ -11,7 +11,7 @@
 
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
-FILE_DIR = 'logs/nazaHover/'	# Log file directory
+FILE_DIR = 'logs/fwdAvoid/'	# Log file directory
 TEST_DUR = 5		# Length of test [s]
 ALT_SET = 55	# [cm]
 FWD_SET = 100	# [cm]
@@ -234,6 +234,7 @@ if armDrone:
 
 # --------------- Init Controller ---------------------------------------------
 throttle = TMID
+fwdDist = MAX_DIST_IN
 dErr = 0
 iErr = 0
 heightPrev = height
@@ -288,17 +289,18 @@ while time()<(tstart+TEST_DUR) and (not GPIO.input(BUTTON_PIN)):
 		# Limit Pitch Values
 		pitch = int(min(max(pitchSet,PMIN),PMAX))
 		
-		# Update Throttle
-		try:
-			if fwdDist<MAX_DIST_IN-10:
-				canary.setPitch(pitch)
-				print "Pitch: ",pitch
-			else:
-				canary.setPitch(1500)
-				print "Pitch: 1500 (OUT OF RANGE)"
-		except:
-			raise
-			print "Pitch set error"
+		if armDrone:
+			# Update Pitch
+			try:
+				if fwdDist<MAX_DIST_IN-10:
+					canary.setPitch(pitch)
+					print "Pitch: ",pitch
+				else:
+					canary.setPitch(1500)
+					print "Pitch: 1500 (OUT OF RANGE)"
+			except:
+				raise
+				print "Pitch set error"
 		# Update Distance
 		try:
 			# Read time of flight and convert to cm
@@ -326,7 +328,7 @@ while time()<(tstart+TEST_DUR) and (not GPIO.input(BUTTON_PIN)):
 
 	# --------- Status Output -----------------------------------
 		print "Height: {0:3d}cm  Error: {1:3d} Throttle: {2:4d}".format(height,error,throttle)
-		print "FWD: {0:3d}cm  Pitch: {1:4d}}".format(fwdDist,pitch)
+		print "FWD: {0:3d}cm  Pitch: {1:4d}".format(fwdDist,pitch)
 		sleep(dt)
 
 	except KeyboardInterrupt:
