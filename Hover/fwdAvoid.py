@@ -11,7 +11,7 @@
 
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
-FILE_DIR = 'logs/fwdAvoid/'	# Log file directory
+LOG_DIR = 'logs/fwdAvoid/'	# Log file directory
 TEST_DUR = 5		# Length of test [s]
 ALT_SET = 55	# [cm]
 FWD_SET = 100	# [cm]
@@ -160,7 +160,7 @@ if armDrone:
 
 if logOn:
 	try:
-		fname = FILE_DIR
+		fname = LOG_DIR
 		if armDrone == 0:
 			fname = fname+'x'
 		fname = fname+strftime("%Y.%m.%d.%H%M%S")+'.S'+str(ALT_SET)
@@ -193,7 +193,7 @@ GPIO.output(STATUS_LED, GPIO.LOW)
 sleep(.1)
 
 # Init the CO2 detection w/ printing and logging
-co2 = CO2Comm(STATUS_LED,1,1)
+co2 = CO2Comm(STATUS_LED,1,1,LOG_DIR)
 sleep(.1)
 
 # --------------- Takeoff Sequence---------------------------------------------
