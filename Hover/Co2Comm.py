@@ -7,7 +7,7 @@ from time import sleep, strftime, time
 
 class CO2Comm:
 	CO2ThreadFlag = 1
-	def __init__(self, address, printFlag, logOn):
+	def __init__(self, address, printFlag, logOn, logDir):
 		self.CO2_PIN = address
 		self.printFlag = printFlag
 		self.logOn = logOn
@@ -20,8 +20,8 @@ class CO2Comm:
 		sleep(.05)
 # Logging 
 		if self.logOn:
-			self.fname = 'logs/CO2/'
-			self.fname = self.fname+strftime("%Y.%m.%d.%H%M%S")+'.Co2.vsc'
+			self.fname = logDir
+			self.fname = self.fname+strftime("%Y.%m.%d.%H%M%S")+'.Co2.csv'
 			self.f = open(self.fname,'a')
 
 # Sensor read thread Function
