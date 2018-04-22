@@ -5,7 +5,7 @@
 
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
-FILE_DIR = 'logs/nazaHover/'	# Log file directory
+FILE_DIR = 'logs/kevinDemo2/'	# Log file directory
 testDur = 5		# Length of test [s]
 setpoint = 55	# [cm]
 SETPOINT2 = 55	# [cm] step change @ u[t-testDur/2]
