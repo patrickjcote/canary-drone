@@ -17,7 +17,7 @@ ALT_SET = 55	# [cm]
 FWD_SET = 100	# [cm]
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
 #  Flight Value Limits
-TMAX = 1575		# Max throttle value
+TMAX = 1650		# Max throttle value
 TMIN = 1425		# Min throttle value
 TMID = 1500		# Initial Throttle
 PMIN = 1480		# Min Pitch Value
@@ -30,7 +30,8 @@ SMA_ALT = 3		# Altitude sensor filter taps
 SMA2 = 25		# Distance sensor filter taps
 # Controller Values
 KP_ALT = 1		# Proportional Gain for the altitude controller
-KP_PITCH = .15	# Proportional Gain for pitch controller
+KI_ALT = .1		# Integral gain for altitude controller
+KP_PITCH =.15	# Proportional Gain for pitch controller
 
 # -----------------------------------------------------------------------------
 
@@ -57,7 +58,7 @@ if userInputFlag:
 
 # Controller Gains
 	Kp = KP_ALT
-	Ki = 0
+	Ki = KI_ALT
 	Kd = 0
 	IERR_LIM = 70	# Max +/- integral error for windup reset
 #Kp = input("Kp Gain : ")		# Proportional gain

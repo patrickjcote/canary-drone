@@ -11,7 +11,7 @@ setpoint = 55	# [cm]
 SETPOINT2 = 55	# [cm] step change @ u[t-testDur/2]
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
 #  Flight Value Limits
-TMAX = 1575		# Max throttle value
+TMAX = 1625		# Max throttle value
 TMIN = 1425		# Min throttle value
 TMID = 1500		# Initial Throttle
 # Time of Flight Mode 0-good,1-better,2-Best,3-Long Range,4-High Speed
@@ -20,8 +20,8 @@ TOF_MODE = 3	# Ranging mode of azimuth ToFs
 MAX_DIST_IN = 300 # Maximum valid distance read by ToFs
 SMA_LENGTH = 3	# Length of Simple Moving Average
 # Controller Values
-KP_ALT = 1		# Proportional Gain for the altitude controller
-
+KP_ALT = 2		# Proportional Gain for the altitude controller
+KI_ALT = .1		# Integral Gain for altitude controller
 # -----------------------------------------------------------------------------
 
 # Import Dependencies
@@ -47,7 +47,7 @@ if userInputFlag:
 
 # Controller Gains
 	Kp = KP_ALT
-	Ki = 0
+	Ki = KI_ALT
 	Kd = 0
 	IERR_LIM = 70	# Max +/- integral error for windup reset
 #Kp = input("Kp Gain : ")		# Proportional gain
