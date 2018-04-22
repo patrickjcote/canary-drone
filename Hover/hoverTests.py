@@ -1,36 +1,26 @@
-# File: fwdAvoid.py
-# Version: 0.1
+# File: kevenDemoNazaCO2.py
+# Version: 0.5
 # Author: 2018 - Patrick Cote
-# Description: Testing front object avoidance
-
-#TODO: Put shutdown sequence into a function
-#TODO: Fix input args check so we can run this on boot
-#TODO: Fix Cypress i2c check
-#TODO: Optimize delay to improve sample rate
-#TODO: Design FIR to replace SMA
+# Description: Hover Demo for Kevin with CO2 sensor
 
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
-LOG_DIR = 'logs/fwdAvoid/'	# Log file directory
-TEST_DUR = 10		# Length of test [s]
-ALT_SET = 55	# [cm]
-FWD_SET = 100	# [cm]
+FILE_DIR = 'logs/kevinDemo2/'	# Log file directory
+testDur = 10		# Length of test [s]
+setpoint = 55	# [cm]
+SETPOINT2 = 55	# [cm] step change @ u[t-testDur/2]
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
 #  Flight Value Limits
 TMAX = 1575		# Max throttle value
 TMIN = 1425		# Min throttle value
 TMID = 1500		# Initial Throttle
-PMIN = 1480		# Min Pitch Value
-PMAX = 1520		# Max Pitch Value
 # Time of Flight Mode 0-good,1-better,2-Best,3-Long Range,4-High Speed
 TOF_MODE_B = 3	# Ranging mode for downward-facing ToF
 TOF_MODE = 3	# Ranging mode of azimuth ToFs
 MAX_DIST_IN = 300 # Maximum valid distance read by ToFs
-SMA_ALT = 3		# Altitude sensor filter taps
-SMA2 = 25		# Distance sensor filter taps
+SMA_LENGTH = 3	# Length of Simple Moving Average
 # Controller Values
 KP_ALT = 1		# Proportional Gain for the altitude controller
-KP_PITCH = .15	# Proportional Gain for pitch controller
 
 # -----------------------------------------------------------------------------
 
@@ -65,8 +55,8 @@ if userInputFlag:
 #Kd = input("Kd Gain : ")		# Derivative gain
 # Display Test Parameters
 	print "---- Test Plan ----"
-	print "Set point: ",ALT_SET
-	print "Throttle Range of ",TMIN,"-",TMAX," for ",TEST_DUR,"s"
+	print "Set point: ",setpoint
+	print "Throttle Range of ",TMIN,"-",TMAX," for ",testDur,"s"
 	print "P: ",Kp," I: ",Ki," Kd: ",Kd
 
 # Confirm Drone Arming
@@ -160,10 +150,10 @@ if armDrone:
 
 if logOn:
 	try:
-		fname = LOG_DIR
+		fname = FILE_DIR
 		if armDrone == 0:
 			fname = fname+'x'
-		fname = fname+strftime("%Y.%m.%d.%H%M%S")+'.S'+str(ALT_SET)
+		fname = fname+strftime("%Y.%m.%d.%H%M%S")+'.S'+str(setpoint)
 		fname = fname+'Tl'+str(TMIN)+'Th'+str(TMAX)+'A'
 		fname = fname+'PID'+str(Kp)+'-'+str(Ki)+'-'+str(Kd)+'.csv'
 		f = open(fname,'a')
@@ -193,16 +183,12 @@ GPIO.output(STATUS_LED, GPIO.LOW)
 sleep(.1)
 
 # Init the CO2 detection w/ printing and logging
-co2Dir = LOG_DIR
-if armDrone == 0:
-	co2Dir = co2Dir + 'x'
-co2 = CO2Comm(STATUS_LED,1,1,co2Dir)
+co2 = CO2Comm(STATUS_LED,1,1,FILE_DIR)
 sleep(.1)
 
 # --------------- Takeoff Sequence---------------------------------------------
 height = 0
-distArray = [0]*SMA_ALT
-fwdDistArray = [0]*SMA2
+distArray = [0]*SMA_LENGTH
 if armDrone:
 	canary = CanaryComm(0x08)
 	sleep(1)
@@ -210,7 +196,7 @@ if armDrone:
 	sleep(2)
 	# Take off Sequence
 	try:
-		while(height<ALT_SET*0.75):
+		while(height<setpoint*0.75):
 			try:
 				# Read time of flight and convert to cm
 				distIn = (tofBottom.get_distance())/10
@@ -219,7 +205,7 @@ if armDrone:
 				if(distIn > 0 and distIn < MAX_DIST_IN):
 					distArray.append(distIn)
 					del distArray[0]
-				height = sum(distArray)/SMA_ALT
+				height = sum(distArray)/SMA_LENGTH
 			except:
 				print "Dist error"
 			throttle = TMAX
@@ -238,7 +224,6 @@ if armDrone:
 
 # --------------- Init Controller ---------------------------------------------
 throttle = TMID
-fwdDist = MAX_DIST_IN
 dErr = 0
 iErr = 0
 heightPrev = height
@@ -246,15 +231,17 @@ IMAX = IERR_LIM
 IMIN = -IERR_LIM
 # --------------- Test Start --------------------------------------------------
 # Main loop:
-# Remain in loop for length of TEST_DUR or until "Go Button" is pressed
+# Remain in loop for length of testDur or until "Go Button" is pressed
 # Logic:
 #	Read ToF, filter measurement to get distance to the ground
 #	Calculate error and Calculate new throttle value
 #	Log values and display them to the console
 #	Delay for ToF sampling time
 tstart = time()
-while time()<(tstart+TEST_DUR) and (not GPIO.input(BUTTON_PIN)):
+while time()<(tstart+testDur) and (not GPIO.input(BUTTON_PIN)):
 	try:
+		if time()>(tstart+testDur/2):
+			setpoint = SETPOINT2
 	# ---------  Altitude Hold Controller
 		# Update Distance
 		try:
@@ -265,11 +252,11 @@ while time()<(tstart+TEST_DUR) and (not GPIO.input(BUTTON_PIN)):
 			if(distIn > 0 and distIn < MAX_DIST_IN):
 				distArray.append(distIn)
 				del distArray[0]
-			height = sum(distArray)/SMA_ALT
+			height = sum(distArray)/SMA_LENGTH
 		except:
 			print "Dist error"
 		# Calculate Error
-		error = (ALT_SET-height)
+		error = (setpoint-height)
 		iErr = iErr + error*dt
 		# Intergral Anti-windup reset
 		iErr = min(max(iErr,IMIN),IMAX)
@@ -286,56 +273,16 @@ while time()<(tstart+TEST_DUR) and (not GPIO.input(BUTTON_PIN)):
 				raise
 				print "Throttle set error"
 
-		#------ Front/Back Controller --- Pitch Control
-		# Assume we are clear and level pitch
-		perror = (fwdDist-FWD_SET)
-		pitchSet = KP_PITCH*perror - 1500
-		# Limit Pitch Values
-		pitch = int(min(max(pitchSet,PMIN),PMAX))
-		
-		# Limit Pitch when out of range
-		if fwdDist<MAX_DIST_IN-10:
-			print "Pitch: ",pitch
-		else:
-			#pitch = 1500
-			print "Pitch: 1500 (OUT OF RANGE)"
-
-		if armDrone:
-			# Update Pitch
-			try:
-				canary.setPitch(pitch)
-			except:
-				raise
-				print "Pitch set error"
-		# Update Distance
-		try:
-			# Read time of flight and convert to cm
-			fwdIn = (tofFront.get_distance())/10
-			print "Fwd Read: ",fwdIn
-			# Check if in valid range then load into moving average
-			if(fwdIn > 0 and fwdIn < MAX_DIST_IN):
-				fwdDistArray.append(fwdIn)
-				del fwdDistArray[0]
-			else:
-				fwdDistArray.append(MAX_DIST_IN)
-				del fwdDistArray[0]
-			fwdDist = sum(fwdDistArray)/SMA2
-			print "Fwd SMA: ",fwdDist
-		except:
-			raise
-			print "Fwd Dist error"
-
-	#------------ Logging - CSV File: --------------------------------
-		# Time, height, throttle, error, throttle, pitch, fwd distance <CR>
+	# --------  Logging - CSV File: -----------------------------
+		# Time, height, throttle, error, controller out, <CR>
 		if logOn:
 			data = str(time())+','+str(height)+','+str(throttle)+','
-			data = data + str(error)+','+str(Tpid)+','
-			data = data+str(pitch)+','+str(fwdDist)+'\n'
+			data = data + str(error)+','+str(Tpid)+','+str(setpoint)+','
+			data = data+'\n'
 			f.write(data)
 
 	# --------- Status Output -----------------------------------
 		print "Height: {0:3d}cm  Error: {1:3d} Throttle: {2:4d}".format(height,error,throttle)
-		print "FWD: {0:3d}cm  Pitch: {1:4d}".format(fwdDist,pitch)
 		sleep(dt)
 
 	except KeyboardInterrupt:
@@ -369,7 +316,7 @@ if armDrone:
 			if(distIn > 0 and distIn < MAX_DIST_IN):
 				distArray.append(distIn)
 				del distArray[0]
-			height = sum(distArray)/SMA_ALT
+			height = sum(distArray)/SMA_LENGTH
 		except:
 			print "Dist error"
 		throttle -= 1
