@@ -17,21 +17,22 @@ ALT_SET = 55	# [cm]
 FWD_SET = 100	# [cm]
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
 #  Flight Value Limits
-TMAX = 1650		# Max throttle value
+TMAX = 1770		# Max throttle value
 TMIN = 1425		# Min throttle value
-TMID = 1500		# Initial Throttle
-PMIN = 1480		# Min Pitch Value
-PMAX = 1520		# Max Pitch Value
+TMID = 1550		# Initial Throttle
+PMIN = 1475		# Min Pitch Value
+PMAX = 1525		# Max Pitch Value
 # Time of Flight Mode 0-good,1-better,2-Best,3-Long Range,4-High Speed
 TOF_MODE_B = 3	# Ranging mode for downward-facing ToF
 TOF_MODE = 3	# Ranging mode of azimuth ToFs
 MAX_DIST_IN = 300 # Maximum valid distance read by ToFs
 SMA_ALT = 3		# Altitude sensor filter taps
-SMA2 = 25		# Distance sensor filter taps
+SMA2 = 15		# Distance sensor filter taps
 # Controller Values
-KP_ALT = 1		# Proportional Gain for the altitude controller
-KI_ALT = .1		# Integral gain for altitude controller
-KP_PITCH =.15	# Proportional Gain for pitch controller
+KP_ALT = 5		# Proportional Gain for the altitude controller
+KI_ALT = 2		# Integral gain for altitude controller
+KD_ALT = 1		# Derivative gain for altitude controller
+KP_PITCH = .5	# Proportional Gain for pitch controller
 
 # -----------------------------------------------------------------------------
 
@@ -59,8 +60,8 @@ if userInputFlag:
 # Controller Gains
 	Kp = KP_ALT
 	Ki = KI_ALT
-	Kd = 0
-	IERR_LIM = 70	# Max +/- integral error for windup reset
+	Kd = KD_ALT
+	IERR_LIM = 150	# Max +/- integral error for windup reset
 #Kp = input("Kp Gain : ")		# Proportional gain
 #Ki = input("Ki Gain : ")		# Integral gain
 #Kd = input("Kd Gain : ")		# Derivative gain
@@ -131,6 +132,7 @@ timing = tofBottom.get_timing()
 if (timing < 20000):
     timing = 20000
 dt = timing/1000000.00
+dt = dt * .9
 sleep(1)
 
 # Test ToFs Readings
@@ -210,8 +212,9 @@ if armDrone:
 	canary.arm()
 	sleep(2)
 	# Take off Sequence
+####### TAKE OFF CURRENTLY DISABLED #############
 	try:
-		while(height<ALT_SET*0.75):
+		while(height>ALT_SET*0.75):
 			try:
 				# Read time of flight and convert to cm
 				distIn = (tofBottom.get_distance())/10
@@ -242,6 +245,7 @@ throttle = TMID
 fwdDist = MAX_DIST_IN
 dErr = 0
 iErr = 0
+height = 0
 heightPrev = height
 IMAX = IERR_LIM
 IMIN = -IERR_LIM
@@ -290,15 +294,15 @@ while time()<(tstart+TEST_DUR) and (not GPIO.input(BUTTON_PIN)):
 		#------ Front/Back Controller --- Pitch Control
 		# Assume we are clear and level pitch
 		perror = (fwdDist-FWD_SET)
-		pitchSet = KP_PITCH*perror - 1500
+		pitchSet = KP_PITCH*perror + 1500
 		# Limit Pitch Values
 		pitch = int(min(max(pitchSet,PMIN),PMAX))
 		
 		# Limit Pitch when out of range
-		if fwdDist<MAX_DIST_IN-10:
+		if fwdDist<MAX_DIST_IN-30:
 			print "Pitch: ",pitch
 		else:
-			#pitch = 1500
+			pitch = 1500
 			print "Pitch: 1500 (OUT OF RANGE)"
 
 		if armDrone:
