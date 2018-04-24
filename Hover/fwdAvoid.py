@@ -17,9 +17,9 @@ ALT_SET = 55	# [cm]
 FWD_SET = 100	# [cm]
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
 #  Flight Value Limits
-TMAX = 1770		# Max throttle value
+TMAX = 1575		# Max throttle value
 TMIN = 1425		# Min throttle value
-TMID = 1550		# Initial Throttle
+TMID = 1500		# Initial Throttle
 PMIN = 1475		# Min Pitch Value
 PMAX = 1525		# Max Pitch Value
 # Time of Flight Mode 0-good,1-better,2-Best,3-Long Range,4-High Speed
@@ -29,10 +29,10 @@ MAX_DIST_IN = 300 # Maximum valid distance read by ToFs
 SMA_ALT = 3		# Altitude sensor filter taps
 SMA2 = 15		# Distance sensor filter taps
 # Controller Values
-KP_ALT = 5		# Proportional Gain for the altitude controller
-KI_ALT = 2		# Integral gain for altitude controller
-KD_ALT = 1		# Derivative gain for altitude controller
-KP_PITCH = 25	# Proportional Gain for pitch controller
+KP_ALT = 1		# Proportional Gain for the altitude controller
+KI_ALT = 0		# Integral gain for altitude controller
+KD_ALT = 0		# Derivative gain for altitude controller
+KP_PITCH = -25	# Proportional Gain for pitch controller
 
 # -----------------------------------------------------------------------------
 
@@ -291,13 +291,12 @@ while time()<(tstart+TEST_DUR) and (not GPIO.input(BUTTON_PIN)):
 				print "Throttle set error"
 
 		#------ Front/Back Controller --- Pitch Control
-		# Assume we are clear and level pitch
-		# Limit Pitch when out of range
-		if fwdDist<MAX_DIST_IN-30:
-			perror = (MAX_DIST_IN - fwdDist)/MAX_DIST_IN
-			pitch = perror*KP_PITCH + 1500
+		# Calc fwd erorr 
+		if fwdDist<(MAX_DIST_IN-30):
+			perror = float((MAX_DIST_IN - fwdDist))/float(MAX_DIST_IN)
+			print "Perror: ",perror,"   fwdDist: ",fwdDist
 		else:
-			pitch = 1500
+			perror = 0
 			print "Pitch: 1500 (OUT OF RANGE)"
 		pitchSet = KP_PITCH*perror + 1500
 		# Limit Pitch Values
@@ -382,6 +381,9 @@ if armDrone:
 		except:
 			print "Write throttle error"
 	print "\nCanary Disarm"
+	sleep(.1)
+	canary.disarm()
+	sleep(.5)
 	canary.disarm()
 f.close()
 co2.exit()
