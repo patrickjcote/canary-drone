@@ -183,7 +183,10 @@ GPIO.output(STATUS_LED, GPIO.LOW)
 sleep(.1)
 
 # Init the CO2 detection w/ printing and logging
-co2 = CO2Comm(STATUS_LED,1,1)
+co2Dir = FILE_DIR
+if armDrone == 0:
+	co2Dir = co2Dir + 'x'
+co2 = CO2Comm(STATUS_LED,1,1,co2Dir)
 sleep(.1)
 
 # --------------- Takeoff Sequence---------------------------------------------
