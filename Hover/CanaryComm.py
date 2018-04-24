@@ -57,7 +57,8 @@ class CanaryComm:
 				self.bus.write_i2c_block_data(self.address, 0x00, command)
 				i=5
 				return 1
-			except:
+			except Exception as error:
+				print('caught this error: ' + repr(error))
 				print "Write Error. Try: ",str(i)
 				i += 1
 			return 0
