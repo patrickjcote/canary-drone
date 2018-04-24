@@ -12,7 +12,7 @@
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
 LOG_DIR = 'logs/fwdAvoid/'	# Log file directory
-TEST_DUR = 10		# Length of test [s]
+TEST_DUR = 5		# Length of test [s]
 ALT_SET = 55	# [cm]
 FWD_SET = 100	# [cm]
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
@@ -32,7 +32,7 @@ SMA2 = 15		# Distance sensor filter taps
 KP_ALT = 5		# Proportional Gain for the altitude controller
 KI_ALT = 2		# Integral gain for altitude controller
 KD_ALT = 1		# Derivative gain for altitude controller
-KP_PITCH = .5	# Proportional Gain for pitch controller
+KP_PITCH = 25	# Proportional Gain for pitch controller
 
 # -----------------------------------------------------------------------------
 
@@ -212,9 +212,8 @@ if armDrone:
 	canary.arm()
 	sleep(2)
 	# Take off Sequence
-####### TAKE OFF CURRENTLY DISABLED #############
 	try:
-		while(height>ALT_SET*0.75):
+		while(height<ALT_SET*0.75):
 			try:
 				# Read time of flight and convert to cm
 				distIn = (tofBottom.get_distance())/10
@@ -293,17 +292,17 @@ while time()<(tstart+TEST_DUR) and (not GPIO.input(BUTTON_PIN)):
 
 		#------ Front/Back Controller --- Pitch Control
 		# Assume we are clear and level pitch
-		perror = (fwdDist-FWD_SET)
+		# Limit Pitch when out of range
+		if fwdDist<MAX_DIST_IN-30:
+			perror = (MAX_DIST_IN - fwdDist)/MAX_DIST_IN
+			pitch = perror*KP_PITCH + 1500
+		else:
+			pitch = 1500
+			print "Pitch: 1500 (OUT OF RANGE)"
 		pitchSet = KP_PITCH*perror + 1500
 		# Limit Pitch Values
 		pitch = int(min(max(pitchSet,PMIN),PMAX))
 		
-		# Limit Pitch when out of range
-		if fwdDist<MAX_DIST_IN-30:
-			print "Pitch: ",pitch
-		else:
-			pitch = 1500
-			print "Pitch: 1500 (OUT OF RANGE)"
 
 		if armDrone:
 			# Update Pitch
