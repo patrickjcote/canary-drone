@@ -12,7 +12,7 @@
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
 LOG_DIR = 'logs/fwdAvoid/'	# Log file directory
-TEST_DUR = 5		# Length of test [s]
+TEST_DUR = 15		# Length of test [s]
 ALT_SET = 55	# [cm]
 FWD_SET = 100	# [cm]
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
@@ -27,12 +27,12 @@ TOF_MODE_B = 3	# Ranging mode for downward-facing ToF
 TOF_MODE = 3	# Ranging mode of azimuth ToFs
 MAX_DIST_IN = 300 # Maximum valid distance read by ToFs
 SMA_ALT = 3		# Altitude sensor filter taps
-SMA2 = 15		# Distance sensor filter taps
+SMA2 = 1		# Distance sensor filter taps
 # Controller Values
 KP_ALT = 1		# Proportional Gain for the altitude controller
 KI_ALT = 0		# Integral gain for altitude controller
 KD_ALT = 0		# Derivative gain for altitude controller
-KP_PITCH = -25	# Proportional Gain for pitch controller
+KP_PITCH = -30	# Proportional Gain for pitch controller
 
 # -----------------------------------------------------------------------------
 
@@ -381,9 +381,14 @@ if armDrone:
 		except:
 			print "Write throttle error"
 	print "\nCanary Disarm"
+	canary = CanaryComm(0x08)
 	sleep(.1)
 	canary.disarm()
 	sleep(.5)
+	canary.disarm()
+if armDrone:
+	canary.arm()
+	sleep(.2)
 	canary.disarm()
 f.close()
 co2.exit()
