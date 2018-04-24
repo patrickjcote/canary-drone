@@ -27,7 +27,7 @@ TOF_MODE_B = 3	# Ranging mode for downward-facing ToF
 TOF_MODE = 3	# Ranging mode of azimuth ToFs
 MAX_DIST_IN = 300 # Maximum valid distance read by ToFs
 SMA_ALT = 3		# Altitude sensor filter taps
-SMA2 = 1		# Distance sensor filter taps
+SMA2 = 3		# Distance sensor filter taps
 # Controller Values
 KP_ALT = 1		# Proportional Gain for the altitude controller
 KI_ALT = 0		# Integral gain for altitude controller
