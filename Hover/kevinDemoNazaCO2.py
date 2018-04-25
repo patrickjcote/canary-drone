@@ -6,7 +6,7 @@
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
 FILE_DIR = 'logs/kevinDemo2/'	# Log file directory
-testDur = 5		# Length of test [s]
+testDur = 9		# Length of test [s]
 setpoint = 55	# [cm]
 SETPOINT2 = 55	# [cm] step change @ u[t-testDur/2]
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
@@ -325,10 +325,19 @@ if armDrone:
 		throttle -= 1
 		try:
 			canary.setThrottle(throttle)
+			print "Landing Throttle:",throttle
 		except:
 			print "Write throttle error"
 	print "\nCanary Disarm"
-	canary.disarm()
+	sleep(.5)
+	try:
+		canary.setThrottle(1001)
+		sleep(.2)
+		canary.disarm()
+		sleep(.2)
+		canary.close()
+	except:
+		print "Disarm Failed... RUN!"
 f.close()
 co2.exit()
 sleep(.1)

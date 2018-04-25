@@ -38,6 +38,8 @@ class CanaryComm:
 		self.channel = [1000,1500,1500,1500,1000]
 		self.updateState()
 
+	def close(self):
+		self.bus.close()
 	# Return State
 	def getState(self):
 		return self.channel
