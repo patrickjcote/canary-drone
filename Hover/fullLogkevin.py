@@ -238,17 +238,17 @@ if armDrone:
 			try:
 				canary.setThrottle(throttle)
 				canary.setPitch(TAKEOFF_PITCH)
+				if logOn:
+					data = str(time())+','+str(height)+','+str(throttle)+','
+					data = data + str(error)+','+str(Tpid)+','+str(setpoint)+','
+					data = data+'\n'
+					f.write(data)
+					sleep(.5)
 			except:
 				raise
 				print "Throttle set error"
 	# --------  Logging - CSV File: -----------------------------
 		# Time, height, throttle, error, controller out, <CR>
-		if logOn:
-			data = str(time())+','+str(height)+','+str(throttle)+','
-			data = data + str(error)+','+str(Tpid)+','+str(setpoint)+','
-			data = data+'\n'
-			f.write(data)
-			sleep(.5)
 		canary.setThrottle(TMID)
 		canary.setPitch(1500)
 	except KeyboardInterrupt:
@@ -356,6 +356,13 @@ if armDrone:
 		try:
 			canary.setThrottle(throttle)
 			print "Landing Throttle:",throttle
+		# --------  Logging - CSV File: -----------------------------
+			# Time, height, throttle, error, controller out, <CR>
+			if logOn:
+				data = str(time())+','+str(height)+','+str(throttle)+','
+				data = data + str(error)+','+str(Tpid)+','+str(setpoint)+','
+				data = data+'\n'
+				f.write(data)
 		except:
 			print "Write throttle error"
 	print "\nCanary Disarm"
