@@ -360,7 +360,7 @@ if armDrone:
 	except:
 		print "Disarm Failed... RUN!"
 f.close()
-co2.exit()
+#co2.exit()
 sleep(.1)
 tofBottom.stop_ranging()
 tofFront.stop_ranging()
