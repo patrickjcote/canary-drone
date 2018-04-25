@@ -6,7 +6,7 @@
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
 FILE_DIR = 'logs/kevinDemo2/'	# Log file directory
-testDur = 7		# Length of test [s]
+testDur = 5		# Length of test [s]
 setpoint = 55	# [cm]
 SETPOINT2 = 55	# [cm] step change @ u[t-testDur/2]
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
@@ -212,6 +212,7 @@ sleep(.1)
 
 # --------------- Takeoff Sequence---------------------------------------------
 height = 0
+error = 0
 distArray = [0]*SMA_LENGTH
 if armDrone:
 	canary = CanaryComm(0x08)
@@ -233,12 +234,20 @@ if armDrone:
 			except:
 				print "Dist error"
 			throttle = TMAX
+			Tpid = throttle
 			try:
 				canary.setThrottle(throttle)
 				canary.setPitch(TAKEOFF_PITCH)
 			except:
 				raise
 				print "Throttle set error"
+	# --------  Logging - CSV File: -----------------------------
+		# Time, height, throttle, error, controller out, <CR>
+		if logOn:
+			data = str(time())+','+str(height)+','+str(throttle)+','
+			data = data + str(error)+','+str(Tpid)+','+str(setpoint)+','
+			data = data+'\n'
+			f.write(data)
 			sleep(.5)
 		canary.setThrottle(TMID)
 		canary.setPitch(1500)
