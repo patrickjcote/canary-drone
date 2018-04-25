@@ -6,7 +6,7 @@
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
 FILE_DIR = 'logs/kevinDemo2/'	# Log file directory
-testDur = 5		# Length of test [s]
+testDur = 15		# Length of test [s]
 setpoint = 55	# [cm]
 SETPOINT2 = 55	# [cm] step change @ u[t-testDur/2]
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
@@ -360,7 +360,7 @@ if armDrone:
 			# Time, height, throttle, error, controller out, <CR>
 			if logOn:
 				data = str(time())+','+str(height)+','+str(throttle)+','
-				data = data + str(error)+','+str(Tpid)+','+str(setpoint)+','
+				data = data + str(error)+','+str(throttle)+','+str(setpoint)+','
 				data = data+'\n'
 				f.write(data)
 		except:
