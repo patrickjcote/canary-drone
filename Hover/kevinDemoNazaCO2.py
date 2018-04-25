@@ -6,10 +6,11 @@
 # --------------- Test Settings------------------------------------------------
 logOn = 1		# enable data logging
 FILE_DIR = 'logs/kevinDemo2/'	# Log file directory
-testDur = 5		# Length of test [s]
+testDur = 15		# Length of test [s]
 setpoint = 55	# [cm]
 SETPOINT2 = 55	# [cm] step change @ u[t-testDur/2]
 TAKEOFF_PITCH = 1500	# Pitch value to combat ugly takeoff
+TAKE_OFF_SET = 50	# [cm] min takeoff height
 #  Flight Value Limits
 TMAX = 1575		# Max throttle value
 TMIN = 1425		# Min throttle value
@@ -39,7 +40,7 @@ from Co2Comm import CO2Comm
 #else:
 #	userInputFlag = 1
 
-userInputFlag = 1
+userInputFlag = 0
 
 if userInputFlag:
 # ------- User Input ----------------------------------------------------------
@@ -65,7 +66,7 @@ if userInputFlag:
 # ---- End User Input ---------------------------------------------------------
 else:
 	# Controller Gains
-	Kp = KP_GAIN
+	Kp = KP_ALT
 	Ki = 0
 	Kd = 0
 	IERR_LIM = 70	# Max +/- integral error for windup reset
@@ -80,6 +81,26 @@ GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(STATUS_LED, GPIO.OUT)
 GPIO.setup(BUTTON_PIN, GPIO.IN)
+
+print "Press the 'A' button on the Kill Switch to initiate takeoff..."
+# Wait for button to init test, Flash LED to signal ready
+while not GPIO.input(BUTTON_PIN):
+	GPIO.output(STATUS_LED, GPIO.HIGH)
+	sleep(.5)
+	GPIO.output(STATUS_LED, GPIO.LOW)
+	sleep(.5)
+# Rapid flash Status LED to signal takeoff has been enabled
+# Turn off the LED for 1 second then blink once to indicate takeoff
+for i in range(0,10):
+	GPIO.output(STATUS_LED, GPIO.HIGH)
+	sleep(.1)
+	GPIO.output(STATUS_LED, GPIO.LOW)
+	sleep(.1)
+sleep(1)
+GPIO.output(STATUS_LED, GPIO.HIGH)
+sleep(.1)
+GPIO.output(STATUS_LED, GPIO.LOW)
+sleep(.1)
 
 # -- ToF Sensor Initialization --
 # GPIO for Sensor 1 shutdown pin
@@ -199,7 +220,7 @@ if armDrone:
 	sleep(2)
 	# Take off Sequence
 	try:
-		while(height<setpoint*0.75):
+		while(height<TAKE_OFF_SET):
 			try:
 				# Read time of flight and convert to cm
 				distIn = (tofBottom.get_distance())/10
